@@ -531,10 +531,10 @@ hs.hotkey.bind({}, "f12", function()
         hs.alert.show("触发快捷指令失败", hs.screen.primaryScreen(), smallerFontStyle)
     end
 end)
--- 绑定 F18 键来执行"灯光全开"
+-- 绑定 F18 键来执行"桌面开灯"
 hs.hotkey.bind({}, "F18", function()
     -- 创建 AppleScript 命令字符串来执行快捷指令
-    local script = [[do shell script "shortcuts run '灯光全开'"]]
+    local script = [[do shell script "shortcuts run '桌面开灯'"]]
     
     -- 执行 AppleScript
     hs.osascript.applescript(script)
