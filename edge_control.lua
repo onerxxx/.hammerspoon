@@ -1,4 +1,4 @@
--- Edge窗口管理模块
+-- 新建Edge窗口管理模块
 
 -- 绑定快捷键 Cmd+Alt+E 来打开新的 Edge 窗口
 hs.hotkey.bind({"cmd", "alt"}, "e", function()
