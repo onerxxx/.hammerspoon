@@ -531,13 +531,47 @@ hs.hotkey.bind({}, "f12", function()
         hs.alert.show("触发快捷指令失败", hs.screen.primaryScreen(), smallerFontStyle)
     end
 end)
+-- 执行 Home Assistant 场景
+local function runScene(sceneEntityId)
+    local headers = {
+        ["Authorization"] = "Bearer " .. config.token,
+        ["Content-Type"] = "application/json"
+    }
+    
+    -- 使用完整的entity_id格式
+    local serviceData = {
+        entity_id = sceneEntityId
+    }
+    
+    local url = config.baseUrl .. "api/services/scene/turn_on"
+    
+    hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
+        if code == 200 or code == 201 then
+            hs.alert.show("🏠场景已执行", hs.screen.primaryScreen(), smallerFontStyle)
+        else
+            -- 显示更详细的错误信息
+            local errorMsg = "执行场景失败: " .. code
+            if body then
+                local errorData = hs.json.decode(body)
+                if errorData and errorData.message then
+                    errorMsg = errorMsg .. " - " .. errorData.message
+                end
+            end
+            hs.alert.show(errorMsg, hs.screen.primaryScreen(), smallerFontStyle)
+        end
+    end)
+end
+
 -- 绑定 F18 键来执行"桌面开灯"
 hs.hotkey.bind({}, "F18", function()
     -- 创建 AppleScript 命令字符串来执行快捷指令
-    local script = [[do shell script "shortcuts run '桌面开灯'"]]
+    local script = [[do shell script "shortcuts run 'Deskon'"]]
     
     -- 执行 AppleScript
     hs.osascript.applescript(script)
+    
+    -- 执行 Home Assistant 场景"桌面开灯"
+    runScene("scene.zhuo_mian_kai_deng_zhong_zhi")
 end)
 
 -- 绑定快捷键 F17 键来执行"关灯"
