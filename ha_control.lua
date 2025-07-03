@@ -547,7 +547,7 @@ local function runScene(sceneEntityId)
     
     hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
         if code == 200 or code == 201 then
-            hs.alert.show("🏠场景已执行", hs.screen.primaryScreen(), smallerFontStyle)
+            hs.alert.show("场景:桌面开灯", hs.screen.primaryScreen(), smallerFontStyle)
         else
             -- 显示更详细的错误信息
             local errorMsg = "执行场景失败: " .. code
