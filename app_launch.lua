@@ -38,16 +38,34 @@ end
 -- 监听抖音应用启动并最大化窗口
 local function maximizeDouyin(appName, eventType, appObject)
     if eventType == hs.application.watcher.launched and appName == "抖音" then
-        -- 延迟一小段时间确保窗口已完全加载
-        hs.timer.doAfter(0.6, function()
+        -- 使用重试机制确保窗口最大化成功
+        local function tryMaximize(retryCount)
+            retryCount = retryCount or 0
+            local maxRetries = 5
+            
             local app = hs.application.get("抖音")
             if app then
                 local win = app:mainWindow()
-                if win then
+                if win and win:isVisible() then
                     win:maximize()
                     hs.alert.show("窗口已最大化", smallerFontStyle)
+                    return
                 end
             end
+            
+            -- 如果窗口还没准备好，继续重试
+            if retryCount < maxRetries then
+                hs.timer.doAfter(0.3, function()
+                    tryMaximize(retryCount + 1)
+                end)
+            else
+                hs.alert.show("抖音窗口最大化失败", smallerFontStyle)
+            end
+        end
+        
+        -- 初始延迟后开始尝试
+        hs.timer.doAfter(0.8, function()
+            tryMaximize()
         end)
     end
 end
