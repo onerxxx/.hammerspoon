@@ -1,12 +1,8 @@
 
 
--- 设置窗口动画持续时间为 0 秒
--- 这将禁用所有窗口移动/调整大小时的动画效果
-hs.window.animationDuration = 0
 
 require('folderSync')
 require('xdownie')
-require('wheelzoom')
 require("ha_control")
 require("edge_control")
 require("open_iina")

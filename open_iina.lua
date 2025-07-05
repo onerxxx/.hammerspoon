@@ -31,7 +31,7 @@ local function handleClipboardChange()
 
     -- 2. 核心逻辑：如果从 Moonlight 切换出来，并且剪贴板内容是特定视频链接
     if lastFocusedApp == "Moonlight" and currentAppName ~= "Moonlight" then
-        local server, path = currentContent:match("^\\\\(192%.168%.2%.9)\\(.+%.mp4)$")
+        local server, path = currentContent:match("^\\\\(192%.168%.2%.9)\\(.+%.mp4)$") or currentContent:match("^\\\\(192%.168%.2%.9)\\(.+%.mkv)$")
         if server and path then
             log("从 Moonlight 切换到 " .. currentAppName .. "，剪贴板匹配视频路径。不执行打开操作。剪贴板内容: " .. currentContent)
             -- 更新 lastClipboardContent，因为这个内容已经被“识别”并决定不处理
@@ -60,9 +60,9 @@ local function handleClipboardChange()
     -- 更新上次剪贴板内容 (只有在确定要进行匹配检查时才更新)
     lastClipboardContent = currentContent
     
-    -- 5. 检查是否是Windows网络路径或本地/Volumes路径并且是mp4文件
-    local server, path = currentContent:match("^\\\\\\(192%.168%.2%.9)\\\\(.+%.mp4)$")
-    local localPath = currentContent:match("^(/Volumes/.+%.mp4)$")
+    -- 5. 检查是否是Windows网络路径或本地/Volumes路径并且是mp4或mkv文件
+    local server, path = currentContent:match("^\\\\\\(192%.168%.2%.9)\\\\(.+%.mp4)$") or currentContent:match("^\\\\\\(192%.168%.2%.9)\\\\(.+%.mkv)$")
+    local localPath = currentContent:match("^(/Volumes/.+%.mp4)$") or currentContent:match("^(/Volumes/.+%.mkv)$")
     
     if server and path then
         -- 构建新路径

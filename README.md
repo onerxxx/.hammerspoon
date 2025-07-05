@@ -39,7 +39,7 @@ Microsoft Edge 浏览器窗口管理：
 视频下载自动化模块：
 - 监听剪贴板内容
 - 自动检测并使用 Downie 4 下载：
-  - Twitter 视频
+  - Twitter视频
   - 微博视频
   - 抖音视频
   - 新浪短链接
@@ -72,5 +72,5 @@ Microsoft Edge 浏览器窗口管理：
 - Cmd+Alt+S：手动触发文件夹同步
 - Cmd+Alt+Ctrl+Z：开启/关闭网页缩放功能
 - Cmd+Alt+Ctrl+V：重启剪贴板监听
-- F18：开启所有灯光
-- F17：关闭所有灯光
+- Ctrl+PageUp：开启所有灯光
+- Ctrl+PageDown：关闭所有灯光

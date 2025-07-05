@@ -25,7 +25,7 @@ local function loadConfig()
     
     -- 使用默认配置
     config = {
-        baseUrl = "http://192.168.2.9:8123/",
+        baseUrl = "http://192.168.2.111:8123/",
         entityId = "light.yeelink_colora_6b37_switch_status",
         scrollThrottleTime = 0.1,
         brightnessStep = 50,
@@ -547,7 +547,7 @@ local function runScene(sceneEntityId)
     
     hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
         if code == 200 or code == 201 then
-            hs.alert.show("场景:桌面开灯", hs.screen.primaryScreen(), smallerFontStyle)
+   --         hs.alert.show("场景:桌面开灯", hs.screen.primaryScreen(), smallerFontStyle)
         else
             -- 显示更详细的错误信息
             local errorMsg = "执行场景失败: " .. code
@@ -563,7 +563,7 @@ local function runScene(sceneEntityId)
 end
 
 -- 绑定 F18 键来执行"桌面开灯"
-hs.hotkey.bind({}, "F18", function()
+hs.hotkey.bind({"ctrl"}, "pageup", function()
     -- 创建 AppleScript 命令字符串来执行快捷指令
     local script = [[do shell script "shortcuts run 'Deskon'"]]
     
@@ -572,12 +572,13 @@ hs.hotkey.bind({}, "F18", function()
     
     -- 执行 Home Assistant 场景"桌面开灯"
     runScene("scene.zhuo_mian_kai_deng_zhong_zhi")
+    
 end)
 
 -- 绑定快捷键 F17 键来执行"关灯"
-hs.hotkey.bind({}, "F17", function()
+hs.hotkey.bind({"ctrl"}, "pagedown", function()
     -- 创建 AppleScript 命令字符串来执行快捷指令
-    local script = [[do shell script "shortcuts run '关灯'"]]
+    local script = [[do shell script "shortcuts run 'Deskoff'"]]
     
     -- 执行 AppleScript
     hs.osascript.applescript(script)
