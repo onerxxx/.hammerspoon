@@ -79,22 +79,7 @@ keyWatcher:start()
 scrollWatcher:start()
 isWatcherInstalled = true
 
--- 添加一个热键来手动重启监听器
-hs.hotkey.bind({"cmd", "alt", "ctrl"}, "Z", function()
-    if isWatcherInstalled then
-        keyWatcher:stop()
-        scrollWatcher:stop()
-        isWatcherInstalled = false
-        log("网页缩放功能已停止")
-        hs.notify.new({title="网页缩放", informativeText="功能已停止"}):send()
-    else
-        keyWatcher:start()
-        scrollWatcher:start()
-        isWatcherInstalled = true
-        log("网页缩放功能已启动")
-        hs.notify.new({title="网页缩放", informativeText="功能已启动"}):send()
-    end
-end)
+
 
 -- 确保脚本退出时清理资源
 hs.shutdownCallback = function()

@@ -212,7 +212,7 @@ local function setBrightness(brightness)
         if code == 200 or code == 201 then
              -- 关闭所有已存在的 alert
             hs.alert.closeAll()
-            hs.alert.show(string.format("💡亮度 : %d%%", math.max(1, math.floor(brightness / 255 * 80))), hs.screen.primaryScreen(), 1.2, smallerFontStyle)
+            hs.alert.show(string.format("💡亮度 : %d%%", math.max(1, math.floor(brightness / 255 * 100))), hs.screen.primaryScreen(), 1.2, smallerFontStyle)
         else
             hs.alert.show("设置亮度失败: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
         end
@@ -472,7 +472,6 @@ local function startWatchers()
     scrollWatcher:start()
     isWatcherInstalled = true
     log("监听器已启动")
-    hs.alert.show("灯光控制监听器已启动", hs.screen.primaryScreen(), smallerFontStyle)
 end
 
 -- 注册清理函数
@@ -584,6 +583,7 @@ hs.hotkey.bind({"ctrl"}, "pagedown", function()
     hs.osascript.applescript(script)
 end)
 -- 初始化提示
-hs.alert.show("使用 F10 切换灯光", hs.screen.primaryScreen(), smallerFontStyle)
-hs.alert.show("使用 Ctrl+Alt+滚轮 调节亮度", hs.screen.primaryScreen(), smallerFontStyle)
-hs.alert.show(string.format("步进亮度 %d/256", config.brightnessStep), hs.screen.primaryScreen(), smallerFontStyle)
+hs.alert.show("👌🏻初始化成功", hs.screen.primaryScreen(), smallerFontStyle)
+
+--hs.alert.show("使用 Ctrl+Alt+滚轮 调节亮度", hs.screen.primaryScreen(), smallerFontStyle)
+--hs.alert.show(string.format("步进亮度 %d/256", config.brightnessStep), hs.screen.primaryScreen(), smallerFontStyle)

@@ -55,7 +55,8 @@ local function handleClipboardChange()
     -- 4. 如果剪贴板内容与上次内容相同（并且不是上面特殊处理的情况），则不处理
     if currentContent == lastClipboardContent then
         lastFocusedApp = currentAppName -- 更新最后焦点应用
-
+        return
+    end
     
     -- 更新上次剪贴板内容 (只有在确定要进行匹配检查时才更新)
     lastClipboardContent = currentContent
@@ -117,5 +118,4 @@ end)
 hs.shutdownCallback = function()
     clipboardWatcher:stop()
     log("剪贴板监听已停止")
-end
 end
