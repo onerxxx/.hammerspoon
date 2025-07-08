@@ -26,7 +26,7 @@ local function launchApp(appName)
     
     if not appRunning then
         hs.application.launchOrFocus(appName)
-        hs.alert.show("已启动" .. appName, smallerFontStyle)
+        hs.alert.show("🚀 已启动" .. appName, smallerFontStyle)
     end
 end
 
@@ -48,7 +48,7 @@ local function maximizeDouyin(appName, eventType, appObject)
                 local win = app:mainWindow()
                 if win and win:isVisible() then
                     win:maximize()
-                    hs.alert.show("窗口已最大化", smallerFontStyle)
+                    hs.alert.show("📱 窗口已最大化", smallerFontStyle)
                     return
                 end
             end
@@ -59,7 +59,7 @@ local function maximizeDouyin(appName, eventType, appObject)
                     tryMaximize(retryCount + 1)
                 end)
             else
-                hs.alert.show("抖音窗口最大化失败", smallerFontStyle)
+                hs.alert.show("❌ 抖音窗口最大化失败", smallerFontStyle)
             end
         end
         

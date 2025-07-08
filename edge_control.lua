@@ -43,7 +43,7 @@ hs.hotkey.bind({"cmd", "alt"}, "m", function()
     -- 获取所有屏幕
     local screens = hs.screen.allScreens()
     if #screens < 2 then
-        hs.alert.show("需要至少两个屏幕才能移动窗口")
+        hs.alert.show("⚠️ 需要至少两个屏幕才能移动窗口")
         return
     end
     

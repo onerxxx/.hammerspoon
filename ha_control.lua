@@ -71,11 +71,11 @@ local function getDeviceState(callback)
             if state and state.state then
                 callback(state.state)
             else
-                hs.alert.show("无法解析设备状态", hs.screen.primaryScreen(), smallerFontStyle)
+                hs.alert.show("⚠️ 无法解析设备状态", hs.screen.primaryScreen(), smallerFontStyle)
                 callback(nil)
             end
         else
-            hs.alert.show("获取设备状态失败，错误码: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
+            hs.alert.show("❌ 获取设备状态失败，错误码: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
             callback(nil)
         end
     end)
@@ -113,13 +113,13 @@ local function toggleDevice(entityId)
                     hs.alert.show("🌻切换顶灯开关", hs.screen.primaryScreen(), smallerFontStyle)
                 else
                     -- 如果无法获取状态，显示错误提示
-                    hs.alert.show("无法获取设备状态", hs.screen.primaryScreen(), smallerFontStyle)
+                    hs.alert.show("⚠️ 无法获取设备状态", hs.screen.primaryScreen(), smallerFontStyle)
                 end
             end)
 
         else
             -- 失败时显示错误信息
-            hs.alert.show("控制设备失败: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
+            hs.alert.show("❌ 控制设备失败: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
         end
     end)
 end
@@ -142,7 +142,7 @@ local function turnOn()
 
             hs.alert.show("💡灯光已打开", hs.screen.primaryScreen(), smallerFontStyle)
         else
-            hs.alert.show("打开灯失败: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
+            hs.alert.show("❌ 打开灯失败: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
         end
     end)
 end
@@ -165,7 +165,7 @@ local function turnOff()
 
             hs.alert.show("💡灯光已关闭", hs.screen.primaryScreen(), smallerFontStyle)
         else
-            hs.alert.show("关闭灯失败: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
+            hs.alert.show("❌ 关闭灯失败: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
         end
     end)
 end
@@ -185,11 +185,11 @@ local function getBrightness(callback)
             if state and state.attributes and state.attributes.brightness then
                 callback(state.attributes.brightness)
             else
-                hs.alert.show("无法获取亮度信息", hs.screen.primaryScreen(), smallerFontStyle)
+                hs.alert.show("⚠️ 无法获取亮度信息", hs.screen.primaryScreen(), smallerFontStyle)
                 callback(nil)
             end
         else
-            hs.alert.show("获取亮度失败，错误码: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
+            hs.alert.show("❌ 获取亮度失败，错误码: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
             callback(nil)
         end
     end)
@@ -214,7 +214,7 @@ local function setBrightness(brightness)
             hs.alert.closeAll()
             hs.alert.show(string.format("💡亮度 : %d%%", math.max(1, math.floor(brightness / 255 * 100))), hs.screen.primaryScreen(), 1.2, smallerFontStyle)
         else
-            hs.alert.show("设置亮度失败: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
+            hs.alert.show("❌ 设置亮度失败: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
         end
     end)
 end
@@ -280,44 +280,48 @@ end
 
 
 
--- 将光照度传递给快捷指令，增加重试和错误提示
-local function sendIlluminationToShortcut(illumination, shortcutName, retries)
-    retries = retries or 3 -- 默认重试3次
-    log(string.format("准备调用快捷指令 '%s'，光照度: %d (剩余尝试次数: %d)", shortcutName, illumination, retries))
-
-    local script = string.format([[
-tell application "Shortcuts"
-    set output to (run the shortcut named "%s" with input "%d")
-end tell
-return output]], shortcutName, illumination)
-
-    local ok, result, error = hs.osascript.applescript(script)
-    if ok then
-        log(string.format("✅ 成功将光照度 %d 传递给快捷指令 '%s'，结果: %s", illumination, shortcutName, result or "无返回值"))
+-- 使用 BetterDisplay 应用设置显示器亮度
+local function setBrightnessWithCLI(illumination)
+    local brightness
+    
+    -- 根据光照度设置亮度（使用小数格式）
+    if illumination <= 44 then
+        brightness = "0.63"  -- 63%
     else
-        log(string.format("❌ 传递光照度失败: %s", error or "未知错误"))
-        if retries > 0 then
-            log(string.format("将在1秒后重试..."))
-            hs.timer.doAfter(1, function()
-                sendIlluminationToShortcut(illumination, shortcutName, retries - 1)
-            end)
-        else
-            log(string.format("❌ 快捷指令 '%s' 多次执行失败，请检查快捷指令是否存在或Hammerspoon权限。", shortcutName))
-            hs.alert.show(string.format("快捷指令 '%s' 执行失败", shortcutName), hs.screen.primaryScreen(), smallerFontStyle)
-        end
+        brightness = "0.64"  -- 64%
     end
+    
+    local command = string.format('/Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay set -name="LG HDR WQHD" -brightness=%s', brightness)
+    
+    log(string.format("光照度: %d lux, 设置亮度为: %s", illumination, brightness))
+    
+    hs.task.new("/bin/sh", function(exitCode, stdOut, stdErr)
+        if exitCode == 0 then
+            log(string.format("亮度设置成功: %s", brightness))
+            -- 使用 SF Symbols 显示亮度调节提示
+            local brightnessIcon = "􀻟"  -- 可以替换为 SF Symbol
+            hs.alert.show(string.format("%s 亮度调整为: %s%%", brightnessIcon, math.floor(tonumber(brightness) * 100)), hs.screen.primaryScreen(), smallerFontStyle)
+        else
+            log(string.format("亮度设置失败 (退出码: %d): %s", exitCode, stdErr))
+        end
+    end, {"-c", command}):start()
 end
 
 -- 监控光照传感器
 local function monitorIlluminationSensor()
     getSensorState(illuminationSensorId, function(illumination)
         if illumination then
-            log(string.format("光照度: %d lux", illumination))
+            log(string.format("当前光照度: %d lux, 上次记录值: %s", illumination, tostring(lastIlluminationValue)))
             
-            -- 使用快捷指令控制屏幕亮度，替代BetterDisplay
-            sendIlluminationToShortcut(illumination, "控制主屏幕亮度", 3) -- 传递重试次数
-            
-            lastIlluminationValue = illumination
+            -- 检查光照度变化是否超过阈值
+             if lastIlluminationValue == nil or math.abs(illumination - lastIlluminationValue) > 3 then
+                 log(string.format("光照度变化超过3 lux，触发亮度调节"))
+                 -- 使用 betterdisplaycli 控制显示器亮度
+                 setBrightnessWithCLI(illumination)
+                 lastIlluminationValue = illumination
+             else
+                 log("光照度变化未超过3 lux，跳过亮度调节")
+             end
         end
     end)
 end
@@ -585,7 +589,7 @@ startWatchers()
 hs.hotkey.bind({"cmd", "alt", "ctrl"}, "L", function()
     if isWatcherInstalled then
         cleanup()
-        hs.alert.show("灯光控制监听器已停止", hs.screen.primaryScreen(), smallerFontStyle)
+        hs.alert.show("⏹️ 灯光控制监听器已停止", hs.screen.primaryScreen(), smallerFontStyle)
     else
         startWatchers()
     end
@@ -600,9 +604,8 @@ end)
 hs.hotkey.bind({}, "f9", function()
     -- 使用 AppleScript 触发快捷指令
     local script = [[
-tell application "Shortcuts"
-    run the shortcut named "切换桌面灯带"
-end tell]]
+do shell script "shortcuts run '切换桌面灯带'"
+]]
 
     local ok, _, _ = hs.osascript.applescript(script)
     if ok then
@@ -613,7 +616,7 @@ end tell]]
           end)
     
     else
-        hs.alert.show("触发快捷指令失败", hs.screen.primaryScreen(), smallerFontStyle)
+        hs.alert.show("❌ 触发快捷指令失败", hs.screen.primaryScreen(), smallerFontStyle)
     end
 end)
 
@@ -621,16 +624,15 @@ end)
 hs.hotkey.bind({}, "f12", function()
     -- 使用 AppleScript 触发快捷指令
     local script = [[
-tell application "Shortcuts"
-    run the shortcut named "切换桌面台灯"
-end tell]]
+do shell script "shortcuts run '切换桌面台灯'"
+]]
 
     local ok, _, _ = hs.osascript.applescript(script)
     if ok then
         hs.alert.closeAll()
         hs.alert.show("📝切换台灯开关", hs.screen.primaryScreen(), smallerFontStyle)
     else
-        hs.alert.show("触发快捷指令失败", hs.screen.primaryScreen(), smallerFontStyle)
+        hs.alert.show("❌ 触发快捷指令失败", hs.screen.primaryScreen(), smallerFontStyle)
     end
 end)
 -- 执行 Home Assistant 场景
@@ -668,9 +670,8 @@ end
 hs.hotkey.bind({"ctrl"}, "pageup", function()
     -- 创建 AppleScript 命令字符串来执行快捷指令
     local script = [[
-tell application "Shortcuts"
-    run the shortcut named "Deskon"
-end tell]]
+do shell script "shortcuts run 'Deskon'"
+]]
     
     -- 执行 AppleScript
     hs.osascript.applescript(script)
@@ -684,9 +685,8 @@ end)
 hs.hotkey.bind({"ctrl"}, "pagedown", function()
     -- 创建 AppleScript 命令字符串来执行快捷指令
     local script = [[
-tell application "Shortcuts"
-    run the shortcut named "Deskoff"
-end tell]]
+do shell script "shortcuts run 'Deskoff'"
+]]
     
     -- 执行 AppleScript
     hs.osascript.applescript(script)
