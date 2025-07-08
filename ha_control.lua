@@ -49,11 +49,11 @@ local smallerFontStyle = {
     fillColor = {hex = "#2f2928", alpha = 0.9},  -- 设置为半透明橙红色背景
     strokeColor = {hex = "#564c49", alpha = 0.8},  -- 边框颜色
     radius = 17, -- 圆角大小
-    padding = 18, -- 内间距
+    padding = 17, -- 内间距
 
     fadeInDuration = 0.1,  -- 快速淡入
     fadeOutDuration = 0.4, -- 平滑淡出
-    strokeWidth = 8,  -- 移除边框
+    strokeWidth = 7,  -- 移除边框
 }
 
 -- 获取设备状态
@@ -236,15 +236,110 @@ local brightnessOneCount = 0
 local lastBrightnessOneTime = 0
 
 -- 增强的日志函数
-local logger = nil
+local logger = hs.logger.new('ha_control', 'debug')
+logger.setLogLevel('info')
+
 local function log(message)
-    if not logger then
-        logger = hs.logger.new('ha_control', 'debug')
-        -- 设置日志级别为info，减少不必要的调试信息
-        logger.setLogLevel('info')
+    if logger then
+        logger:i(message)
+    else
+        print("[ha_control] " .. tostring(message))
+    end
+end
+
+-- 光照传感器监控功能
+local illuminationSensorId = "sensor.xiaomi_pir1_45bb_illumination"
+local lastIlluminationValue = nil
+local illuminationTimer = nil
+
+-- 获取传感器状态
+local function getSensorState(sensorId, callback)
+    local headers = {
+        ["Authorization"] = "Bearer " .. config.token,
+        ["Content-Type"] = "application/json"
+    }
+    
+    local statusUrl = config.baseUrl .. "api/states/" .. sensorId
+    
+    hs.http.asyncGet(statusUrl, headers, function(code, body, headers)
+        if code == 200 then
+            local state = hs.json.decode(body)
+            if state and state.state then
+                local value = tonumber(state.state)
+                callback(value)
+            else
+                log("无法解析传感器状态: " .. sensorId)
+                callback(nil)
+            end
+        else
+            log("获取传感器状态失败，错误码: " .. code .. ", 传感器: " .. sensorId)
+            callback(nil)
+        end
+    end)
+end
+
+
+
+-- 将光照度传递给快捷指令，增加重试和错误提示
+local function sendIlluminationToShortcut(illumination, shortcutName, retries)
+    retries = retries or 3 -- 默认重试3次
+    log(string.format("准备调用快捷指令 '%s'，光照度: %d (剩余尝试次数: %d)", shortcutName, illumination, retries))
+
+    local script = string.format([[
+tell application "Shortcuts"
+    set output to (run the shortcut named "%s" with input "%d")
+end tell
+return output]], shortcutName, illumination)
+
+    local ok, result, error = hs.osascript.applescript(script)
+    if ok then
+        log(string.format("✅ 成功将光照度 %d 传递给快捷指令 '%s'，结果: %s", illumination, shortcutName, result or "无返回值"))
+    else
+        log(string.format("❌ 传递光照度失败: %s", error or "未知错误"))
+        if retries > 0 then
+            log(string.format("将在1秒后重试..."))
+            hs.timer.doAfter(1, function()
+                sendIlluminationToShortcut(illumination, shortcutName, retries - 1)
+            end)
+        else
+            log(string.format("❌ 快捷指令 '%s' 多次执行失败，请检查快捷指令是否存在或Hammerspoon权限。", shortcutName))
+            hs.alert.show(string.format("快捷指令 '%s' 执行失败", shortcutName), hs.screen.primaryScreen(), smallerFontStyle)
+        end
+    end
+end
+
+-- 监控光照传感器
+local function monitorIlluminationSensor()
+    getSensorState(illuminationSensorId, function(illumination)
+        if illumination then
+            log(string.format("光照度: %d lux", illumination))
+            
+            -- 使用快捷指令控制屏幕亮度，替代BetterDisplay
+            sendIlluminationToShortcut(illumination, "控制主屏幕亮度", 3) -- 传递重试次数
+            
+            lastIlluminationValue = illumination
+        end
+    end)
+end
+
+-- 启动光照传感器监控定时器
+local function startIlluminationMonitoring()
+    if illuminationTimer then
+        illuminationTimer:stop()
     end
     
-    logger:i(message)
+    -- 每10秒检查一次光照传感器
+    illuminationTimer = hs.timer.doEvery(10, monitorIlluminationSensor)
+    log("光照传感器监控已启动")
+end
+
+-- 停止光照传感器监控
+local function stopIlluminationMonitoring()
+    if illuminationTimer then
+        illuminationTimer:stop()
+        illuminationTimer = nil
+        log("光照传感器监控已停止")
+    end
 end
 
 -- 获取滚轮值的函数
@@ -461,6 +556,8 @@ local function cleanup()
     if scrollWatcher then
         scrollWatcher:stop()
     end
+    -- 停止光照传感器监控
+    stopIlluminationMonitoring()
     isWatcherInstalled = false
     log("监听器已停止")
 end
@@ -502,7 +599,10 @@ end)
 -- 绑定 F9 快捷键来控制桌面灯带
 hs.hotkey.bind({}, "f9", function()
     -- 使用 AppleScript 触发快捷指令
-    local script = [[do shell script "shortcuts run '切换桌面灯带'"]]
+    local script = [[
+tell application "Shortcuts"
+    run the shortcut named "切换桌面灯带"
+end tell]]
 
     local ok, _, _ = hs.osascript.applescript(script)
     if ok then
@@ -520,7 +620,10 @@ end)
 -- 绑定 F12 快捷键来控制桌面台灯
 hs.hotkey.bind({}, "f12", function()
     -- 使用 AppleScript 触发快捷指令
-    local script = [[do shell script "shortcuts run '切换桌面台灯'"]]
+    local script = [[
+tell application "Shortcuts"
+    run the shortcut named "切换桌面台灯"
+end tell]]
 
     local ok, _, _ = hs.osascript.applescript(script)
     if ok then
@@ -564,7 +667,10 @@ end
 -- 绑定 F18 键来执行"桌面开灯"
 hs.hotkey.bind({"ctrl"}, "pageup", function()
     -- 创建 AppleScript 命令字符串来执行快捷指令
-    local script = [[do shell script "shortcuts run 'Deskon'"]]
+    local script = [[
+tell application "Shortcuts"
+    run the shortcut named "Deskon"
+end tell]]
     
     -- 执行 AppleScript
     hs.osascript.applescript(script)
@@ -577,13 +683,20 @@ end)
 -- 绑定快捷键 F17 键来执行"关灯"
 hs.hotkey.bind({"ctrl"}, "pagedown", function()
     -- 创建 AppleScript 命令字符串来执行快捷指令
-    local script = [[do shell script "shortcuts run 'Deskoff'"]]
+    local script = [[
+tell application "Shortcuts"
+    run the shortcut named "Deskoff"
+end tell]]
     
     -- 执行 AppleScript
     hs.osascript.applescript(script)
 end)
+-- 启动光照传感器监控
+startIlluminationMonitoring()
+
 -- 初始化提示
 hs.alert.show("👌🏻初始化成功", hs.screen.primaryScreen(), smallerFontStyle)
+hs.alert.show("🌞光照传感器监控已启动", hs.screen.primaryScreen(), smallerFontStyle)
 
 --hs.alert.show("使用 Ctrl+Alt+滚轮 调节亮度", hs.screen.primaryScreen(), smallerFontStyle)
 --hs.alert.show(string.format("步进亮度 %d/256", config.brightnessStep), hs.screen.primaryScreen(), smallerFontStyle)
