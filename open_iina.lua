@@ -86,10 +86,10 @@ local function handleClipboardChange()
         hs.pasteboard.clearContents()
         lastClipboardContent = ""
         -- 记录日志
-        log("正在使用系统默认播放器打开本地视频: " .. localPath)
+        log("正在使用系统默认播放器打开本地视频:" .. localPath)
         log("已清理剪贴板内容")
     else
-        log("剪贴板内容已更新，但不匹配视频路径: " .. currentContent)
+        log("剪贴板内容已更新，但不匹配视频路径")
     end
 
     -- 在函数的最后，更新 lastFocusedApp 为当前的应用

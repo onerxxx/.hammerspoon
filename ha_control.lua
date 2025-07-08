@@ -44,7 +44,7 @@ loadConfig()
 -- 自定义通知样式 - 缩小字体
 local smallerFontStyle = {
     textFont = "misans medium",
-    textSize = 15,  -- 缩小字体大小
+    textSize = 14.5,  -- 缩小字体大小
     textColor = {hex = "#ffffff", alpha = 0.9},  
     fillColor = {hex = "#2f2928", alpha = 0.9},  -- 设置为半透明橙红色背景
     strokeColor = {hex = "#564c49", alpha = 0.8},  -- 边框颜色
