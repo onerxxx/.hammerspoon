@@ -11,7 +11,42 @@ local smallerFontStyle = {
     fadeInDuration = 0.1,  -- 快速淡入
     fadeOutDuration = 0.4, -- 平滑淡出
     strokeWidth = 8,  -- 移除边框
+    atScreenEdge = 1, -- 居中置顶 (0=左上, 1=上中, 2=右上)
 }
+
+-- 简化的自定义 alert 函数
+local function showCustomAlert(message, topMargin, duration, screen)
+    -- 暂时使用原始的 hs.alert.show，但修改样式以显示在顶部
+    local customStyle = {
+        textFont = smallerFontStyle.textFont,
+        textSize = smallerFontStyle.textSize,
+        textColor = smallerFontStyle.textColor,
+        fillColor = smallerFontStyle.fillColor,
+        strokeColor = smallerFontStyle.strokeColor,
+        radius = smallerFontStyle.radius,
+        padding = smallerFontStyle.padding,
+        fadeInDuration = smallerFontStyle.fadeInDuration,
+        fadeOutDuration = smallerFontStyle.fadeOutDuration,
+        strokeWidth = smallerFontStyle.strokeWidth,
+        atScreenEdge = 1 -- 居中置顶
+    }
+    
+    duration = duration or 2
+    screen = screen or hs.screen.primaryScreen()
+    
+    -- 使用原始的 hs.alert.show
+    hs.alert.show(message, screen, customStyle, duration)
+end
+
+-- 关闭所有自定义 alert
+local function closeAllCustomAlerts()
+    for _, canvas in ipairs(customAlerts) do
+        if canvas then
+            canvas:delete()
+        end
+    end
+    customAlerts = {}
+end
 
 -- 启动应用程序，如果已启动则忽略
 local function launchApp(appName)
@@ -26,7 +61,7 @@ local function launchApp(appName)
     
     if not appRunning then
         hs.application.launchOrFocus(appName)
-        hs.alert.show("🚀 已启动" .. appName, smallerFontStyle)
+        showCustomAlert("🚀 已启动" .. appName, 50, 2)
     end
 end
 
@@ -48,7 +83,6 @@ local function maximizeDouyin(appName, eventType, appObject)
                 local win = app:mainWindow()
                 if win and win:isVisible() then
                     win:maximize()
-                    hs.alert.show("📱 窗口已最大化", smallerFontStyle)
                     return
                 end
             end
@@ -59,7 +93,7 @@ local function maximizeDouyin(appName, eventType, appObject)
                     tryMaximize(retryCount + 1)
                 end)
             else
-                hs.alert.show("❌ 抖音窗口最大化失败", smallerFontStyle)
+                showCustomAlert("❌ 抖音窗口最大化失败", 50, 2)
             end
         end
         

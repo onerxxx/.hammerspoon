@@ -1,5 +1,29 @@
 -- 新建Edge窗口管理模块
 
+-- 居中置顶样式配置
+local centerTopStyle = {
+    textFont = "misans medium",
+    textSize = 15,
+    textColor = {hex = "#ffffff", alpha = 0.9},
+    fillColor = {hex = "#28302f", alpha = 0.9},
+    strokeColor = {hex = "#564c49", alpha = 0.8},
+    radius = 17,
+    padding = 18,
+    fadeInDuration = 0.1,
+    fadeOutDuration = 0.4,
+    strokeWidth = 8,
+    atScreenEdge = 1, -- 居中置顶 (0=左上, 1=上中, 2=右上)
+}
+
+-- 简化的自定义 alert 函数
+local function showCustomAlert(message, topMargin, duration, screen)
+    duration = duration or 2
+    screen = screen or hs.screen.primaryScreen()
+    
+    -- 使用原始的 hs.alert.show，应用自定义样式
+    hs.alert.show(message, screen, centerTopStyle, duration)
+end
+
 -- 绑定快捷键 Cmd+Alt+E 来打开新的 Edge 窗口
 hs.hotkey.bind({"cmd", "alt"}, "e", function()
     -- 获取鼠标当前所在屏幕的信息
@@ -43,7 +67,7 @@ hs.hotkey.bind({"cmd", "alt"}, "m", function()
     -- 获取所有屏幕
     local screens = hs.screen.allScreens()
     if #screens < 2 then
-        hs.alert.show("⚠️ 需要至少两个屏幕才能移动窗口")
+        showCustomAlert("⚠️ 需要至少两个屏幕才能移动窗口", 50, 2)
         return
     end
     

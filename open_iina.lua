@@ -43,7 +43,10 @@ local function handleClipboardChange()
 
     -- 3. 如果当前应用是 Moonlight，则不进行后续的打开操作
     if currentAppName == "Moonlight" then
-        log("当前应用是 Moonlight，不处理剪贴板。")
+        -- 只有在应用切换到Moonlight时才记录一次日志，避免重复
+        if lastFocusedApp ~= "Moonlight" then
+            log("当前应用是 Moonlight，不处理剪贴板。")
+        end
         -- 如果在 Moonlight 中，剪贴板内容变化了，需要更新 lastClipboardContent
         if currentContent ~= lastClipboardContent then
              lastClipboardContent = currentContent -- 更新，以便下次比较

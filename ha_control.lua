@@ -38,23 +38,56 @@ end
 -- 加载配置
 loadConfig()
 
+
+
 -- 以下是功能实现，一般不需要修改
 -- =====================================================
 
 -- 自定义通知样式 - 缩小字体
 local smallerFontStyle = {
-    textFont = "misans medium",
-    textSize = 14.5,  -- 缩小字体大小
-    textColor = {hex = "#ffffff", alpha = 0.9},  
-    fillColor = {hex = "#2f2928", alpha = 0.9},  -- 设置为半透明橙红色背景
-    strokeColor = {hex = "#564c49", alpha = 0.8},  -- 边框颜色
-    radius = 17, -- 圆角大小
-    padding = 17, -- 内间距
+    textFont = "misans Demibold",
+    textSize = 14.4,  -- 缩小字体大小
+    textColor = {hex = "#ffffff", alpha = 0.83},  
+    fillColor = {hex = "#000000", alpha = 1},  -- 设置为半透明深灰色背景
+    strokeColor = {hex = "#eeeeee", alpha = 0.1},  -- 边框颜色
+    radius = 13, -- 圆角大小
 
-    fadeInDuration = 0.1,  -- 快速淡入
-    fadeOutDuration = 0.4, -- 平滑淡出
-    strokeWidth = 7,  -- 移除边框
+    padding = 21, -- 内间距
+
+    fadeInDuration = 0.2,  -- 快速淡入
+    fadeOutDuration = 0.3, -- 平滑淡出
+    strokeWidth = 0,  -- 移除边框
+    atScreenEdge = 1, -- 居中置顶 (0=左上, 1=上中, 2=右上)
 }
+
+-- 简化的自定义 alert 函数
+local function showCustomAlert(message, topMargin, duration, screen)
+    -- 暂时使用原始的 hs.alert.show，但修改样式以显示在顶部
+    local customStyle = {
+        textFont = smallerFontStyle.textFont,
+        textSize = smallerFontStyle.textSize,
+        textColor = smallerFontStyle.textColor,
+        fillColor = smallerFontStyle.fillColor,
+        strokeColor = smallerFontStyle.strokeColor,
+        radius = smallerFontStyle.radius,
+        padding = smallerFontStyle.padding,
+        fadeInDuration = smallerFontStyle.fadeInDuration,
+        fadeOutDuration = smallerFontStyle.fadeOutDuration,
+        strokeWidth = smallerFontStyle.strokeWidth,
+        atScreenEdge = 1 -- 居中置顶
+    }
+    
+    duration = duration or 2
+    screen = screen or hs.screen.primaryScreen()
+    
+    -- 使用原始的 hs.alert.show
+    hs.alert.show(message, screen, customStyle, duration)
+end
+
+-- 关闭所有自定义 alert（简化版本，不需要实际操作）
+local function closeAllCustomAlerts()
+    -- 由于使用原生 hs.alert.show，不需要手动管理 canvas
+end
 
 -- 获取设备状态
 local function getDeviceState(callback)
@@ -71,11 +104,11 @@ local function getDeviceState(callback)
             if state and state.state then
                 callback(state.state)
             else
-                hs.alert.show("⚠️ 无法解析设备状态", hs.screen.primaryScreen(), smallerFontStyle)
+                showCustomAlert("⚠️ 无法解析设备状态", 50, 2)
                 callback(nil)
             end
         else
-            hs.alert.show("❌ 获取设备状态失败，错误码: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
+            showCustomAlert("❌ 获取设备状态失败，错误码: " .. code, 50, 2)
             callback(nil)
         end
     end)
@@ -96,30 +129,36 @@ local function toggleDevice(entityId)
         entity_id = targetEntityId
     }
     
-    -- 发送按钮按压请求
-    local url = config.baseUrl .. "api/services/button/press"
+    -- 根据设备类型选择合适的服务
+    local url, deviceType
+    if string.find(targetEntityId, "button") then
+        url = config.baseUrl .. "api/services/button/press"
+        deviceType = "按钮"
+    elseif string.find(targetEntityId, "light") then
+        url = config.baseUrl .. "api/services/light/toggle"
+        deviceType = "灯光"
+    else
+        -- 默认使用homeassistant.toggle服务
+        url = config.baseUrl .. "api/services/homeassistant/toggle"
+        deviceType = "设备"
+    end
     
     hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
         if code == 200 or code == 201 then
-            -- 成功时显示通知
-            hs.alert.closeAll()
-
-            -- 获取设备状态并显示
-            getDeviceState(function(state)
-                if state then
-                    -- 获取设备状态并显示
-                    local displayState = state == "on" and "开" or "关"
-                    hs.alert.closeAll() -- 关闭所有已存在的alert
-                    hs.alert.show("🌻切换顶灯开关", hs.screen.primaryScreen(), smallerFontStyle)
-                else
-                    -- 如果无法获取状态，显示错误提示
-                    hs.alert.show("⚠️ 无法获取设备状态", hs.screen.primaryScreen(), smallerFontStyle)
-                end
-            end)
-
+            closeAllCustomAlerts()
+            
+            -- 根据设备类型显示不同的消息
+            if string.find(targetEntityId, "yeelink_colora_6b37") then
+                showCustomAlert("🌻切换顶灯开关", 50, 2)
+            elseif string.find(targetEntityId, "yeelink_stripa_6102") then
+                showCustomAlert("🌈切换灯带开关", 50, 2)
+            elseif string.find(targetEntityId, "yeelink_Lamp2_e655") then
+                showCustomAlert("📝切换台灯开关", 50, 2)
+            else
+                showCustomAlert("✅" .. deviceType .. "切换成功", 50, 2)
+            end
         else
-            -- 失败时显示错误信息
-            hs.alert.show("❌ 控制设备失败: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
+            showCustomAlert("❌ 控制" .. deviceType .. "失败: " .. code, 50, 2)
         end
     end)
 end
@@ -138,11 +177,11 @@ local function turnOn()
     
     hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
         if code == 200 or code == 201 then
-            hs.alert.closeAll() -- 关闭所有已存在的alert
+            closeAllCustomAlerts() -- 关闭所有已存在的alert
 
-            hs.alert.show("💡灯光已打开", hs.screen.primaryScreen(), smallerFontStyle)
+            showCustomAlert("💡灯光已打开", 50, 2)
         else
-            hs.alert.show("❌ 打开灯失败: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
+            showCustomAlert("❌ 打开灯失败: " .. code, 50, 2)
         end
     end)
 end
@@ -161,11 +200,11 @@ local function turnOff()
     
     hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
         if code == 200 or code == 201 then
-            hs.alert.closeAll() -- 关闭所有已存在的alert
+            closeAllCustomAlerts() -- 关闭所有已存在的alert
 
-            hs.alert.show("💡灯光已关闭", hs.screen.primaryScreen(), smallerFontStyle)
+            showCustomAlert("💡灯光已关闭", 50, 2)
         else
-            hs.alert.show("❌ 关闭灯失败: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
+            showCustomAlert("❌ 关闭灯失败: " .. code, 50, 2)
         end
     end)
 end
@@ -185,11 +224,11 @@ local function getBrightness(callback)
             if state and state.attributes and state.attributes.brightness then
                 callback(state.attributes.brightness)
             else
-                hs.alert.show("⚠️ 无法获取亮度信息", hs.screen.primaryScreen(), smallerFontStyle)
+                showCustomAlert("⚠️ 无法获取亮度信息", 50, 2)
                 callback(nil)
             end
         else
-            hs.alert.show("❌ 获取亮度失败，错误码: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
+            showCustomAlert("❌ 获取亮度失败，错误码: " .. code, 50, 2)
             callback(nil)
         end
     end)
@@ -211,10 +250,10 @@ local function setBrightness(brightness)
     hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
         if code == 200 or code == 201 then
              -- 关闭所有已存在的 alert
-            hs.alert.closeAll()
-            hs.alert.show(string.format("💡亮度 : %d%%", math.max(1, math.floor(brightness / 255 * 100))), hs.screen.primaryScreen(), 1.2, smallerFontStyle)
+            closeAllCustomAlerts()
+            showCustomAlert(string.format("💡亮度 : %d%%", math.max(1, math.floor(brightness / 255 * 100))), 50, 1.2)
         else
-            hs.alert.show("❌ 设置亮度失败: " .. code, hs.screen.primaryScreen(), smallerFontStyle)
+            showCustomAlert("❌ 设置亮度失败: " .. code, 50, 2)
         end
     end)
 end
@@ -285,10 +324,10 @@ local function setBrightnessWithCLI(illumination)
     local brightness
     
     -- 根据光照度设置亮度（使用小数格式）
-    if illumination <= 44 then
-        brightness = "0.63"  -- 63%
-    else
+    if illumination <= 42 then
         brightness = "0.64"  -- 64%
+    else
+        brightness = "0.65"  -- 65%
     end
     
     local command = string.format('/Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay set -name="LG HDR WQHD" -brightness=%s', brightness)
@@ -300,7 +339,7 @@ local function setBrightnessWithCLI(illumination)
             log(string.format("亮度设置成功: %s", brightness))
             -- 使用 SF Symbols 显示亮度调节提示
             local brightnessIcon = "􀻟"  -- 可以替换为 SF Symbol
-            hs.alert.show(string.format("%s 亮度调整为: %s%%", brightnessIcon, math.floor(tonumber(brightness) * 100)), hs.screen.primaryScreen(), smallerFontStyle)
+            showCustomAlert(string.format("%s 亮度调整为: %s%%", brightnessIcon, math.floor(tonumber(brightness) * 100)), 50, 2)
         else
             log(string.format("亮度设置失败 (退出码: %d): %s", exitCode, stdErr))
         end
@@ -314,13 +353,13 @@ local function monitorIlluminationSensor()
             log(string.format("当前光照度: %d lux, 上次记录值: %s", illumination, tostring(lastIlluminationValue)))
             
             -- 检查光照度变化是否超过阈值
-             if lastIlluminationValue == nil or math.abs(illumination - lastIlluminationValue) > 3 then
+             if lastIlluminationValue == nil or math.abs(illumination - lastIlluminationValue) > 2 then
                  log(string.format("光照度变化超过3 lux，触发亮度调节"))
                  -- 使用 betterdisplaycli 控制显示器亮度
                  setBrightnessWithCLI(illumination)
                  lastIlluminationValue = illumination
              else
-                 log("光照度变化未超过3 lux，跳过亮度调节")
+                 log("光照度变化未超过2 lux，跳过亮度调节")
              end
         end
     end)
@@ -589,7 +628,7 @@ startWatchers()
 hs.hotkey.bind({"cmd", "alt", "ctrl"}, "L", function()
     if isWatcherInstalled then
         cleanup()
-        hs.alert.show("⏹️ 灯光控制监听器已停止", hs.screen.primaryScreen(), smallerFontStyle)
+        showCustomAlert("⏹️ 灯光控制监听器已停止", 50, 2)
     else
         startWatchers()
     end
@@ -602,38 +641,12 @@ end)
 
 -- 绑定 F9 快捷键来控制桌面灯带
 hs.hotkey.bind({}, "f9", function()
-    -- 使用 AppleScript 触发快捷指令
-    local script = [[
-do shell script "shortcuts run '切换桌面灯带'"
-]]
-
-    local ok, _, _ = hs.osascript.applescript(script)
-    if ok then
-        hs.alert.closeAll()
-        hs.alert.show("🌈切换灯带开关", hs.screen.primaryScreen(), smallerFontStyle)
-        local chooser = hs.chooser.new(function(choice) 
-            if choice then print(choice.text) end 
-          end)
-    
-    else
-        hs.alert.show("❌ 触发快捷指令失败", hs.screen.primaryScreen(), smallerFontStyle)
-    end
+    toggleDevice("light.yeelink_stripa_6102_switch_status")
 end)
 
 -- 绑定 F12 快捷键来控制桌面台灯
 hs.hotkey.bind({}, "f12", function()
-    -- 使用 AppleScript 触发快捷指令
-    local script = [[
-do shell script "shortcuts run '切换桌面台灯'"
-]]
-
-    local ok, _, _ = hs.osascript.applescript(script)
-    if ok then
-        hs.alert.closeAll()
-        hs.alert.show("📝切换台灯开关", hs.screen.primaryScreen(), smallerFontStyle)
-    else
-        hs.alert.show("❌ 触发快捷指令失败", hs.screen.primaryScreen(), smallerFontStyle)
-    end
+    toggleDevice("light.yeelink_Lamp2_e655_Switch_status")
 end)
 -- 执行 Home Assistant 场景
 local function runScene(sceneEntityId)
@@ -661,7 +674,7 @@ local function runScene(sceneEntityId)
                     errorMsg = errorMsg .. " - " .. errorData.message
                 end
             end
-            hs.alert.show(errorMsg, hs.screen.primaryScreen(), smallerFontStyle)
+            showCustomAlert(errorMsg, 50, 2)
         end
     end)
 end
@@ -694,9 +707,8 @@ end)
 -- 启动光照传感器监控
 startIlluminationMonitoring()
 
--- 初始化提示
-hs.alert.show("👌🏻初始化成功", hs.screen.primaryScreen(), smallerFontStyle)
-hs.alert.show("🌞光照传感器监控已启动", hs.screen.primaryScreen(), smallerFontStyle)
 
---hs.alert.show("使用 Ctrl+Alt+滚轮 调节亮度", hs.screen.primaryScreen(), smallerFontStyle)
---hs.alert.show(string.format("步进亮度 %d/256", config.brightnessStep), hs.screen.primaryScreen(), smallerFontStyle)
+
+-- 初始化提示
+showCustomAlert("👌🏻初始化成功", 50, 2)
+showCustomAlert("🌞光照传感器监控已启动", 50, 3) -- 50代表距离屏幕顶部的距离(像素), 2代表显示持续时间(秒)
