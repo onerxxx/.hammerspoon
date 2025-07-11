@@ -47,13 +47,11 @@ loadConfig()
 local smallerFontStyle = {
     textFont = "misans Demibold",
     textSize = 14.4,  -- 缩小字体大小
-    textColor = {hex = "#ffffff", alpha = 0.83},  
+    textColor = {hex = "#ffffff", alpha = 0.9},  
     fillColor = {hex = "#000000", alpha = 1},  -- 设置为半透明深灰色背景
     strokeColor = {hex = "#eeeeee", alpha = 0.1},  -- 边框颜色
     radius = 13, -- 圆角大小
-
     padding = 21, -- 内间距
-
     fadeInDuration = 0.2,  -- 快速淡入
     fadeOutDuration = 0.3, -- 平滑淡出
     strokeWidth = 0,  -- 移除边框
@@ -154,6 +152,8 @@ local function toggleDevice(entityId)
                 showCustomAlert("🌈切换灯带开关", 50, 2)
             elseif string.find(targetEntityId, "yeelink_Lamp2_e655") then
                 showCustomAlert("📝切换台灯开关", 50, 2)
+            elseif string.find(targetEntityId, "philips_candle_9441") then
+                showCustomAlert("🔱切换上台灯开关", 50, 2)
             else
                 showCustomAlert("✅" .. deviceType .. "切换成功", 50, 2)
             end
@@ -647,6 +647,11 @@ end)
 -- 绑定 F12 快捷键来控制桌面台灯
 hs.hotkey.bind({}, "f12", function()
     toggleDevice("light.yeelink_Lamp2_e655_Switch_status")
+end)
+
+-- 绑定 F18 快捷键来控制上台灯
+hs.hotkey.bind({}, "f18", function()
+    toggleDevice("light.philips_candle_9441_switch_status")
 end)
 -- 执行 Home Assistant 场景
 local function runScene(sceneEntityId)
