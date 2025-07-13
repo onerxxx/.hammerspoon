@@ -224,7 +224,7 @@ local function getBrightness(callback)
             if state and state.attributes and state.attributes.brightness then
                 callback(state.attributes.brightness)
             else
-                showCustomAlert("⚠️ 无法获取亮度信息", 50, 2)
+             --   showCustomAlert("⚠️ 无法获取亮度信息", 50, 2)
                 callback(nil)
             end
         else
@@ -634,9 +634,174 @@ hs.hotkey.bind({"cmd", "alt", "ctrl"}, "L", function()
     end
 end)
 
--- 绑定 F10 快捷键来控制顶灯
+-- F10 亮度控制相关变量
+local f10PressTime = nil
+local f10Timer = nil
+local f10BrightnessTimer = nil
+local f10BrightnessDirection = 1  -- 1为增加亮度，-1为减少亮度
+local f10CurrentBrightness = 128
+local f10IsLongPress = false
+local f10EntityId = "light.yeelink_colora_6b37_switch_status"  -- F10控制的设备ID
+
+-- 获取F10设备的当前亮度
+local function getF10Brightness(callback, showError)
+    local headers = {
+        ["Authorization"] = "Bearer " .. config.token,
+        ["Content-Type"] = "application/json"
+    }
+    
+    local statusUrl = config.baseUrl .. "api/states/" .. f10EntityId
+    
+    hs.http.asyncGet(statusUrl, headers, function(code, body, headers)
+        if code == 200 then
+            local state = hs.json.decode(body)
+            if state and state.attributes and state.attributes.brightness then
+                callback(state.attributes.brightness)
+            else
+                if showError then
+                    showCustomAlert("⚠️ 无法获取顶灯亮度信息", 50, 2)
+                end
+                callback(nil)
+            end
+        else
+            if showError then
+                showCustomAlert("❌ 获取顶灯亮度失败，错误码: " .. code, 50, 2)
+            end
+            callback(nil)
+        end
+    end)
+end
+
+-- 设置F10设备的亮度
+local function setF10Brightness(brightness)
+    local serviceData = {
+        entity_id = f10EntityId,
+        brightness = brightness
+    }
+    
+    local url = config.baseUrl .. "api/services/light/turn_on"
+    local headers = {
+        ["Authorization"] = "Bearer " .. config.token,
+        ["Content-Type"] = "application/json"
+    }
+    
+    hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
+        if code == 200 or code == 201 then
+             -- 关闭所有已存在的 alert
+            local brightnessPercent = math.floor(brightness / 255 * 100)
+            -- 在0.1%-0.9%范围内显示为1%
+            if brightnessPercent < 1 then
+                brightnessPercent = 1
+            end
+            showCustomAlert(string.format("💡顶灯亮度 : %d%%", brightnessPercent), 50, 1.2)
+        else
+            showCustomAlert("❌ 设置顶灯亮度失败: " .. code, 50, 2)
+        end
+    end)
+end
+
+-- F10 亮度渐变函数
+local function f10AdjustBrightness()
+    local brightnessStep = math.floor(255 * 0.02)  -- 5%步进，约12.75个亮度单位
+    
+    if f10BrightnessDirection == 1 then
+        -- 增加亮度
+        local newBrightness = math.min(255, f10CurrentBrightness + brightnessStep)
+        
+        -- 如果达到最高亮度，停止调节
+        if newBrightness >= 255 then
+            f10CurrentBrightness = 255
+            setF10Brightness(f10CurrentBrightness)
+            showCustomAlert("🔆顶灯亮度已最高", 50, 2)
+            f10StopBrightnessAdjustment()
+            return
+        else
+            f10CurrentBrightness = newBrightness
+            setF10Brightness(f10CurrentBrightness)
+        end
+    else
+        -- 减少亮度
+        local minBrightness = math.floor(255 * 0.02)  -- 0.5%对应的亮度值
+        local newBrightness = math.max(minBrightness, f10CurrentBrightness - brightnessStep)
+        
+        -- 如果达到最低亮度，停止调节
+        if newBrightness <= minBrightness then
+            f10CurrentBrightness = minBrightness
+            setF10Brightness(f10CurrentBrightness)
+            showCustomAlert("🔅顶灯亮度已最低", 50, 2)
+            f10StopBrightnessAdjustment()
+            return
+        else
+            f10CurrentBrightness = newBrightness
+            setF10Brightness(f10CurrentBrightness)
+        end
+    end
+end
+
+-- 停止F10亮度调节
+local function f10StopBrightnessAdjustment()
+    if f10BrightnessTimer then
+        f10BrightnessTimer:stop()
+        f10BrightnessTimer = nil
+    end
+end
+
+-- 绑定 F10 快捷键来控制顶灯（支持长按亮度控制）
 hs.hotkey.bind({}, "f10", function()
-    toggleDevice("button.yeelink_colora_6b37_toggle")
+    f10PressTime = hs.timer.secondsSinceEpoch()
+    f10IsLongPress = false
+    
+    -- 获取当前亮度作为起始值（静默获取，不显示错误）
+     getF10Brightness(function(currentBrightness)
+         if currentBrightness then
+             f10CurrentBrightness = currentBrightness
+         end
+     end, false)
+    
+    -- 设置1秒后开始亮度调节的定时器
+     f10Timer = hs.timer.doAfter(1.0, function()
+         f10IsLongPress = true
+         
+         -- 检查当前亮度，进行智能方向判断
+         local currentBrightnessPercent = f10CurrentBrightness / 255 * 100
+         if currentBrightnessPercent <= 2 then
+             f10BrightnessDirection = 1  -- 强制设为增加亮度
+        --     showCustomAlert("🔆 亮度过低，开始增加亮度", 50, 1)
+         elseif currentBrightnessPercent >= 90 then
+             f10BrightnessDirection = -1  -- 强制设为减少亮度
+        --     showCustomAlert("🔅 亮度过高，开始减少亮度", 50, 1)
+         else
+             -- 每次长按时切换亮度方向
+             f10BrightnessDirection = -f10BrightnessDirection
+             
+             if f10BrightnessDirection == 1 then
+                 showCustomAlert("🔆 开始增加亮度", 50, 1)
+             else
+                 showCustomAlert("🔅 开始减少亮度", 50, 1)
+             end
+         end
+         
+         -- 开始亮度渐变
+         f10BrightnessTimer = hs.timer.doEvery(0.1, f10AdjustBrightness)
+     end)
+end, function()
+    -- 按键释放时的处理
+    local pressDuration = hs.timer.secondsSinceEpoch() - (f10PressTime or 0)
+    
+    -- 停止所有定时器
+    if f10Timer then
+        f10Timer:stop()
+        f10Timer = nil
+    end
+    f10StopBrightnessAdjustment()
+    
+    -- 如果按键时间小于0.4秒且不是长按，则执行开关切换
+    if pressDuration < 0.4 and not f10IsLongPress then
+        toggleDevice("light.yeelink_colora_6b37_switch_status")
+    end
+    
+    f10PressTime = nil
+    f10IsLongPress = false
 end)
 
 -- 绑定 F9 快捷键来控制桌面灯带
@@ -644,9 +809,175 @@ hs.hotkey.bind({}, "f9", function()
     toggleDevice("light.yeelink_stripa_6102_switch_status")
 end)
 
--- 绑定 F12 快捷键来控制桌面台灯
+-- F12 亮度控制相关变量
+local f12PressTime = nil
+local f12Timer = nil
+local f12BrightnessTimer = nil
+local f12BrightnessDirection = 1  -- 1为增加亮度，-1为减少亮度
+local f12CurrentBrightness = 128
+local f12IsLongPress = false
+local f12EntityId = "light.yeelink_Lamp2_e655_Switch_status"  -- F12控制的设备ID
+
+-- 获取F12设备的当前亮度
+local function getF12Brightness(callback, showError)
+    local headers = {
+        ["Authorization"] = "Bearer " .. config.token,
+        ["Content-Type"] = "application/json"
+    }
+    
+    local statusUrl = config.baseUrl .. "api/states/" .. f12EntityId
+    
+    hs.http.asyncGet(statusUrl, headers, function(code, body, headers)
+        if code == 200 then
+            local state = hs.json.decode(body)
+            if state and state.attributes and state.attributes.brightness then
+                callback(state.attributes.brightness)
+            else
+                if showError then
+                    showCustomAlert("⚠️ 无法获取台灯亮度信息", 50, 2)
+                end
+                callback(nil)
+            end
+        else
+            if showError then
+                showCustomAlert("❌ 获取台灯亮度失败，错误码: " .. code, 50, 2)
+            end
+            callback(nil)
+        end
+    end)
+end
+
+-- 设置F12设备的亮度
+local function setF12Brightness(brightness)
+    local serviceData = {
+        entity_id = f12EntityId,
+        brightness = brightness
+    }
+    
+    local url = config.baseUrl .. "api/services/light/turn_on"
+    local headers = {
+        ["Authorization"] = "Bearer " .. config.token,
+        ["Content-Type"] = "application/json"
+    }
+    
+    hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
+        if code == 200 or code == 201 then
+             -- 关闭所有已存在的 alert
+            closeAllCustomAlerts()
+            local brightnessPercent = math.floor(brightness / 255 * 100)
+            -- 在0.1%-0.9%范围内显示为1%
+            if brightnessPercent < 1 then
+                brightnessPercent = 1
+            end
+            showCustomAlert(string.format("􀆬台灯亮度 : %d%%", brightnessPercent), 50, 1.2)
+        else
+            showCustomAlert("❌ 设置台灯亮度失败: " .. code, 50, 2)
+        end
+    end)
+end
+
+-- F12 亮度渐变函数
+local function f12AdjustBrightness()
+    local brightnessStep = math.floor(255 * 0.02)  -- 5%步进，约12.75个亮度单位
+    
+    if f12BrightnessDirection == 1 then
+        -- 增加亮度
+        local newBrightness = math.min(255, f12CurrentBrightness + brightnessStep)
+        
+        -- 如果达到最高亮度，停止调节
+        if newBrightness >= 255 then
+            f12CurrentBrightness = 255
+            setF12Brightness(f12CurrentBrightness)
+       --     showCustomAlert("🔆 台灯亮度已最高", 50, 1.5)
+            f12StopBrightnessAdjustment()
+            return
+        else
+            f12CurrentBrightness = newBrightness
+            setF12Brightness(f12CurrentBrightness)
+        end
+    else
+        -- 减少亮度
+        local minBrightness = math.floor(255 * 0.02)  -- 0.5%对应的亮度值
+        local newBrightness = math.max(minBrightness, f12CurrentBrightness - brightnessStep)
+        
+        -- 如果达到最低亮度，停止调节
+        if newBrightness <= minBrightness then
+            f12CurrentBrightness = minBrightness
+            setF12Brightness(f12CurrentBrightness)
+      --      showCustomAlert("🔅 台灯亮度已最低", 50, 1.5)
+            f12StopBrightnessAdjustment()
+            return
+        else
+            f12CurrentBrightness = newBrightness
+            setF12Brightness(f12CurrentBrightness)
+        end
+    end
+end
+
+-- 停止F12亮度调节
+local function f12StopBrightnessAdjustment()
+    if f12BrightnessTimer then
+        f12BrightnessTimer:stop()
+        f12BrightnessTimer = nil
+    end
+end
+
+-- 绑定 F12 快捷键来控制桌面台灯（支持长按亮度控制）
 hs.hotkey.bind({}, "f12", function()
-    toggleDevice("light.yeelink_Lamp2_e655_Switch_status")
+    f12PressTime = hs.timer.secondsSinceEpoch()
+    f12IsLongPress = false
+    
+    -- 获取当前亮度作为起始值（静默获取，不显示错误）
+     getF12Brightness(function(currentBrightness)
+         if currentBrightness then
+             f12CurrentBrightness = currentBrightness
+         end
+     end, false)
+    
+    -- 设置0.8秒后开始亮度调节的定时器
+      f12Timer = hs.timer.doAfter(0.8, function()
+          f12IsLongPress = true
+          
+          -- 检查当前亮度，进行智能方向判断
+          local currentBrightnessPercent = f12CurrentBrightness / 255 * 100
+          if currentBrightnessPercent <= 2 then
+              f12BrightnessDirection = 1  -- 强制设为增加亮度
+              showCustomAlert("􁛂开始增加亮度", 50, 1)
+          elseif currentBrightnessPercent >= 90 then
+              f12BrightnessDirection = -1  -- 强制设为减少亮度
+              showCustomAlert("􁑯亮度过高，开始减少亮度", 50, 1)
+          else
+              -- 每次长按时切换亮度方向
+              f12BrightnessDirection = -f12BrightnessDirection
+              
+              if f12BrightnessDirection == 1 then
+                  showCustomAlert("􁛂开始增加亮度", 50, 1)
+              else
+                  showCustomAlert("􁑯开始减少亮度", 50, 1)
+              end
+          end
+          
+          -- 开始亮度渐变
+          f12BrightnessTimer = hs.timer.doEvery(0.15, f12AdjustBrightness)
+      end)
+end, function()
+    -- 按键释放时的处理
+    local pressDuration = hs.timer.secondsSinceEpoch() - (f12PressTime or 0)
+    
+    -- 停止所有定时器
+    if f12Timer then
+        f12Timer:stop()
+        f12Timer = nil
+    end
+    f12StopBrightnessAdjustment()
+    
+    -- 如果按键时间小于0.4秒且不是长按，则执行开关切换
+    if pressDuration < 0.4 and not f12IsLongPress then
+        toggleDevice("light.yeelink_Lamp2_e655_Switch_status")
+    end
+    
+    f12PressTime = nil
+    f12IsLongPress = false
 end)
 
 -- 绑定 F18 快捷键来控制上台灯
