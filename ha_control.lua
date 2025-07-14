@@ -759,7 +759,7 @@ hs.hotkey.bind({}, "f10", function()
      end, false)
     
     -- 设置1秒后开始亮度调节的定时器
-     f10Timer = hs.timer.doAfter(1.0, function()
+     f10Timer = hs.timer.doAfter(0.7, function()
          f10IsLongPress = true
          
          -- 检查当前亮度，进行智能方向判断
@@ -775,14 +775,14 @@ hs.hotkey.bind({}, "f10", function()
              f10BrightnessDirection = -f10BrightnessDirection
              
              if f10BrightnessDirection == 1 then
-                 showCustomAlert("🔆 开始增加亮度", 50, 1)
+    --            showCustomAlert("🔆 开始增加亮度", 50, 1)
              else
-                 showCustomAlert("🔅 开始减少亮度", 50, 1)
+      --           showCustomAlert("🔅 开始减少亮度", 50, 1)
              end
          end
          
          -- 开始亮度渐变
-         f10BrightnessTimer = hs.timer.doEvery(0.1, f10AdjustBrightness)
+         f10BrightnessTimer = hs.timer.doEvery(0.12, f10AdjustBrightness)
      end)
 end, function()
     -- 按键释放时的处理
@@ -934,31 +934,31 @@ hs.hotkey.bind({}, "f12", function()
          end
      end, false)
     
-    -- 设置0.8秒后开始亮度调节的定时器
-      f12Timer = hs.timer.doAfter(0.8, function()
+    -- 设置0.7秒后开始亮度调节的定时器
+      f12Timer = hs.timer.doAfter(0.7, function()
           f12IsLongPress = true
           
           -- 检查当前亮度，进行智能方向判断
           local currentBrightnessPercent = f12CurrentBrightness / 255 * 100
           if currentBrightnessPercent <= 2 then
               f12BrightnessDirection = 1  -- 强制设为增加亮度
-              showCustomAlert("􁛂开始增加亮度", 50, 1)
+     --         showCustomAlert("􁛂开始增加亮度", 50, 1)
           elseif currentBrightnessPercent >= 90 then
               f12BrightnessDirection = -1  -- 强制设为减少亮度
-              showCustomAlert("􁑯亮度过高，开始减少亮度", 50, 1)
+   --           showCustomAlert("􁑯亮度过高，开始减少亮度", 50, 1)
           else
               -- 每次长按时切换亮度方向
               f12BrightnessDirection = -f12BrightnessDirection
               
               if f12BrightnessDirection == 1 then
-                  showCustomAlert("􁛂开始增加亮度", 50, 1)
+     --             showCustomAlert("􁛂开始增加亮度", 50, 1)
               else
-                  showCustomAlert("􁑯开始减少亮度", 50, 1)
+    --              showCustomAlert("􁑯开始减少亮度", 50, 1)
               end
           end
           
           -- 开始亮度渐变
-          f12BrightnessTimer = hs.timer.doEvery(0.15, f12AdjustBrightness)
+          f12BrightnessTimer = hs.timer.doEvery(0.12, f12AdjustBrightness)
       end)
 end, function()
     -- 按键释放时的处理
