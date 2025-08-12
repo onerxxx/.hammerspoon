@@ -1,0 +1,1 @@
+AI不要执行重新加载Hammerspoon的指令, 例如hs.reload()等待.

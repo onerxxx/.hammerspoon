@@ -51,6 +51,7 @@ end
 local middleClickWatcher = hs.eventtap.new({hs.eventtap.event.types.otherMouseDown}, function(event)
     if event:getProperty(hs.eventtap.event.properties.mouseEventButtonNumber) == 2 then
         handleMiddleClick(event)
+        
     end
 end)
 middleClickWatcher:start()
