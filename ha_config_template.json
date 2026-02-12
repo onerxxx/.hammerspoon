@@ -1,0 +1,10 @@
+{
+  "baseUrl": "http://192.168.2.111:8123/",
+  "token": "your_long_lived_access_token_here",
+  "entityId": "light.yeelink_cn_246813879_colora_S_2",
+  "scrollThrottleTime": 0.1,
+  "brightnessStep": 50,
+  "invertScrollDirection": false,
+  "debugMode": false,
+  "fastReload": true
+}
