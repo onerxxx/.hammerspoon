@@ -353,6 +353,92 @@ local function initCornerTrigger()
     end)
 end
 
+-- 顶部中键点击监听器 - 新增功能
+local topMiddleClickTap = nil
+local lastTopClickTime = 0
+local TOP_CLICK_COOLDOWN = 1.0
+
+-- 检查鼠标是否在屏幕顶部中央区域
+local function isMouseInTopCenterArea(mousePos)
+    local screens = hs.screen.allScreens()
+    
+    for _, screen in ipairs(screens) do
+        local frame = screen:fullFrame()  -- 使用fullFrame获取包含菜单栏的完整屏幕区域
+        
+        -- 计算居中区域的边界（在菜单栏上方）
+        local config = {
+            height = 2,
+            width = 500
+        }
+        
+        local leftBound = frame.x + (frame.w - config.width) / 2
+        local rightBound = leftBound + config.width
+        local topBound = frame.y  -- 屏幕最顶端
+        local bottomBound = frame.y + config.height
+        
+        -- 检查鼠标是否在该区域内
+        if mousePos.x >= leftBound and mousePos.x <= rightBound and 
+           mousePos.y >= topBound and mousePos.y <= bottomBound then
+            return true
+        end
+    end
+    
+    return false
+end
+
+-- 初始化顶部中键点击监听器
+local function initTopMiddleClickTrigger()
+    if topMiddleClickTap then
+        topMiddleClickTap:stop()
+    end
+    
+    topMiddleClickTap = hs.eventtap.new({hs.eventtap.event.types.otherMouseDown}, function(event)
+        -- 只处理鼠标中键按下事件
+        if event:getType() == hs.eventtap.event.types.otherMouseDown and 
+           event:getProperty(hs.eventtap.event.properties.mouseEventButtonNumber) == 2 then
+           
+            local currentTime = hs.timer.secondsSinceEpoch()
+            
+            -- 检查冷却时间
+            if currentTime - lastTopClickTime < TOP_CLICK_COOLDOWN then
+                debugPrint("顶部中键监听器: 处于冷却期，跳过执行")
+                return false
+            end
+            
+            local mousePos = hs.mouse.absolutePosition()
+            if not mousePos then 
+                debugPrint("顶部中键监听器: 无法获取鼠标位置")
+                return false 
+            end
+            
+            debugPrint("顶部中键监听器: 鼠标位置 (" .. mousePos.x .. ", " .. mousePos.y .. ")")
+            
+            -- 检查鼠标是否在顶部中央区域
+            if isMouseInTopCenterArea(mousePos) then
+                debugPrint("顶部中键监听器: 鼠标在目标区域内，触发 Cmd+Opt+E")
+                
+                -- 更新最后触发时间
+                lastTopClickTime = currentTime
+                
+                -- 模拟按下 cmd+opt+E
+                hs.eventtap.keyStroke({"cmd", "alt"}, "e")
+                
+                -- 显示通知提醒
+                showCustomAlert("🖱️ 触发顶部中键快捷键", 50, 1)
+                
+                return false
+            else
+                debugPrint("顶部中键监听器: 鼠标不在目标区域内")
+            end
+        end
+        
+        return false
+    end)
+    
+    topMiddleClickTap:start()
+    print("✅ 顶部中键点击监听器已启动")
+end
+
 -- 清理函数：关闭所有调试元素
 local function cleanupDebugElements()
     hideDebugCanvas()
@@ -368,6 +454,10 @@ local function cleanupDebugElements()
         cornerTriggerWatcher:stop()
         cornerTriggerWatcher = nil
     end
+    if topMiddleClickTap then
+        topMiddleClickTap:stop()
+        topMiddleClickTap = nil
+    end
     debugPrint("🧹 所有调试元素已清理")
 end
 
@@ -380,6 +470,9 @@ end
 
 -- 启动右下角触发监听
 initCornerTrigger()
+
+-- 启动顶部中键点击监听
+initTopMiddleClickTrigger()
 
 -- 绑定应急热键：Ctrl+Alt+G
 manualTriggerHotkey = hs.hotkey.bind({"ctrl", "alt"}, "g", function()
