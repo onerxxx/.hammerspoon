@@ -274,7 +274,7 @@ local function isMouseInBottomRightCorner(screen)
     end
     local screenFrame = primary:frame()
     local fullFrame = primary:fullFrame()
-    local cornerSize = 24
+    local cornerSize = 2
     local cornerRect = {
         x = screenFrame.x + screenFrame.w - cornerSize,
         y = screenFrame.y + screenFrame.h - cornerSize,
@@ -353,7 +353,7 @@ local function initCornerTrigger()
     end)
 end
 
--- 顶部中键点击监听器 - 新增功能
+-- 顶部中键点击监听器 - 新建浏览器窗口
 local topMiddleClickTap = nil
 local lastTopClickTime = 0
 local TOP_CLICK_COOLDOWN = 1.0
@@ -368,7 +368,7 @@ local function isMouseInTopCenterArea(mousePos)
         -- 计算居中区域的边界（在菜单栏上方）
         local config = {
             height = 2,
-            width = 500
+            width = 400
         }
         
         local leftBound = frame.x + (frame.w - config.width) / 2
@@ -424,7 +424,7 @@ local function initTopMiddleClickTrigger()
                 hs.eventtap.keyStroke({"cmd", "alt"}, "e")
                 
                 -- 显示通知提醒
-                showCustomAlert("🖱️ 触发顶部中键快捷键", 50, 1)
+                showCustomAlert("🖱️ 新建浏览器窗口", 50, 1)
                 
                 return false
             else

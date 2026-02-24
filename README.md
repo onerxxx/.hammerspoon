@@ -58,28 +58,15 @@ Microsoft Edge 浏览器窗口管理：
 - 每两小时自动执行同步
 - 支持手动触发同步（Cmd+Alt+S）
 
-### wheelzoom.lua
-网页缩放控制模块：
-- 提供网页缩放功能
-- 支持手动开启/关闭功能（Cmd+Alt+Ctrl+Z）
-- 包含自动清理资源的功能
 
-### virtual_keys.lua
-虚拟按键映射模块：
-- 专为Moonlight游戏串流应用设计
-- 自动检测Moonlight应用是否处于前台
-- 将cmd键映射为ctrl键，解决Mac与Windows按键差异问题
-- 支持手动开启/关闭功能（Cmd+Shift+V）
-- 实时按键状态监控，确保准确的按键映射
 
 ## 快捷键总览
 
 - Cmd+Shift+R：重新加载 Hammerspoon 配置
-- Cmd+Shift+V：开启/关闭虚拟按键功能（Moonlight中cmd→ctrl映射）
 - Cmd+Alt+E：新建 Edge 窗口
 - Cmd+Alt+M：移动 Edge 标签页到其他屏幕
 - Cmd+Alt+S：手动触发文件夹同步
-- Cmd+Alt+Ctrl+Z：开启/关闭网页缩放功能
+- Cmd+Alt+Ctrl+M：重启抖音快捷键监听器
 - Cmd+Alt+Ctrl+V：重启剪贴板监听
 - Ctrl+PageUp：开启所有灯光
 - Ctrl+PageDown：关闭所有灯光

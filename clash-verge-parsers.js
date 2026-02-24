@@ -59,8 +59,6 @@ function main(config, profileName) {
         'DOMAIN-SUFFIX,kbjfree.com,🟡专属地区',
         'DOMAIN-KEYWORD,openai,🫧openai',
         'DOMAIN-KEYWORD,cults3d,🫧openai',
-        'PROCESS-NAME,抖音 Helper,🧱直接连接',
-        'DOMAIN-SUFFIX,afreecatv.com,🟡专属地区',
         'DOMAIN-SUFFIX,printables.com,🟡专属地区',
         'DOMAIN-KEYWORD,instagram,🟡专属地区',
         'DOMAIN-KEYWORD,topaz-labs,🛑全球拦截',
@@ -70,7 +68,7 @@ function main(config, profileName) {
         'DOMAIN-KEYWORD,Claude,🫧openai',
         'PROCESS-NAME,Claude,🫧openai',
         'DOMAIN-KEYWORD,macked,🚀节点选择',
-        'DOMAIN-KEYWORD,jav,🐟漏网之鱼'
+
     ];
 
 
