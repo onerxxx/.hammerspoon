@@ -516,8 +516,10 @@ local function hideTriggerArea()
     debugPrint("🧹 手动隐藏触发区域")
 end
 
--- 在Hammerspoon启动时运行PasteNow
-launchPasteNow()
+-- 在Hammerspoon启动时运行PasteNow（延迟3秒执行，避免阻塞reload）
+hs.timer.doAfter(3, function()
+    launchPasteNow()
+end)
 
 return {
     launchApp = launchApp,

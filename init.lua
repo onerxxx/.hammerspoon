@@ -48,8 +48,6 @@ local function closeAllCustomAlerts()
     -- 由于使用原生 hs.alert.show，不需要手动管理 canvas
 end
 
--- 文件夹同步功能模块
-require('folderSync')
 -- 下载工具模块
 require('xdownie')
 -- HomeAssistant智能家居控制模块

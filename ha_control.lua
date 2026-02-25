@@ -306,7 +306,12 @@ local function setBrightness(brightness)
         if code == 200 or code == 201 then
              -- 关闭所有已存在的 alert
             closeAllCustomAlerts()
-            showCustomAlert(string.format("💡亮度 : %d%%", math.max(1, math.floor(brightness / 255 * 100))), 50, 1.2)
+            -- 使用四舍五入以匹配HA的显示
+            local brightnessPercent = math.floor(brightness / 255 * 100 + 0.5)
+            if brightnessPercent < 1 then
+                brightnessPercent = 1
+            end
+            showCustomAlert(string.format("💡亮度 : %d%%", brightnessPercent), 50, 1.2)
         else
             showCustomAlert("❌设置亮度失败: " .. code, 50, 2)
         end
@@ -500,7 +505,14 @@ local function startWatchers()
                                 
                                 log("检测到向下滚动，减少亮度")
                                 getBrightness(function(currentBrightness)
-                                    local newBrightness = currentBrightness and math.max(1, currentBrightness - brightnessStep) or 128
+                                    -- 最低亮度设为1（1%）
+                                    local minBrightness = 1
+                                    local newBrightness
+                                    if currentBrightness and currentBrightness > minBrightness then
+                                        newBrightness = math.max(minBrightness, currentBrightness - brightnessStep)
+                                    else
+                                        newBrightness = minBrightness
+                                    end
                                     setBrightness(newBrightness)
                                     
                                     -- 检测亮度值为1的连续次数
@@ -673,7 +685,8 @@ local function setF9Brightness(brightness)
     hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
         if code == 200 or code == 201 then
             closeAllCustomAlerts()
-            local brightnessPercent = math.floor(brightness / 255 * 100)
+            -- 使用四舍五入以匹配HA的显示
+            local brightnessPercent = math.floor(brightness / 255 * 100 + 0.5)
             if brightnessPercent < 1 then
                 brightnessPercent = 1
             end
@@ -710,8 +723,8 @@ local function f9AdjustBrightness()
             setF9Brightness(f9CurrentBrightness)
         end
     else
-        -- 减少亮度
-        local minBrightness = math.floor(255 * 0.02)  -- 最低2%亮度
+        -- 减少亮度，最低1%亮度
+        local minBrightness = 1
         local newBrightness = math.max(minBrightness, f9CurrentBrightness - brightnessStep)
         if newBrightness <= minBrightness then
             f9CurrentBrightness = minBrightness
@@ -814,7 +827,7 @@ local function getF9Brightness(callback, showError)
     end)
 end
 
--- 设置F9设备的亮度
+-- 设置F9设备的亮度 (第二个定义，已修复)
 local function setF9Brightness(brightness)
     local serviceData = {
         entity_id = f9EntityId,
@@ -830,7 +843,8 @@ local function setF9Brightness(brightness)
     hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
         if code == 200 or code == 201 then
             closeAllCustomAlerts()
-            local brightnessPercent = math.floor(brightness / 255 * 100)
+            -- 使用四舍五入以匹配HA的显示
+            local brightnessPercent = math.floor(brightness / 255 * 100 + 0.5)
             if brightnessPercent < 1 then
                 brightnessPercent = 1
             end
@@ -886,7 +900,8 @@ local function setF10Brightness(brightness)
     hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
         if code == 200 or code == 201 then
              -- 关闭所有已存在的 alert
-            local brightnessPercent = math.floor(brightness / 255 * 100)
+            -- 使用四舍五入以匹配HA的显示
+            local brightnessPercent = math.floor(brightness / 255 * 100 + 0.5)
             -- 在0.1%-0.9%范围内显示为1%
             if brightnessPercent < 1 then
                 brightnessPercent = 1
@@ -926,8 +941,8 @@ local function f9AdjustBrightness()
             setF9Brightness(f9CurrentBrightness)
         end
     else
-        -- 减少亮度
-        local minBrightness = math.floor(255 * 0.02)  -- 0.5%对应的亮度值
+        -- 减少亮度，最低1%亮度
+        local minBrightness = 1
         local newBrightness = math.max(minBrightness, f9CurrentBrightness - brightnessStep)
         
         -- 如果达到最低亮度，停止调节
@@ -1000,7 +1015,8 @@ local function setF12Brightness(brightness)
         if code == 200 or code == 201 then
              -- 关闭所有已存在的 alert
             closeAllCustomAlerts()
-            local brightnessPercent = math.floor(brightness / 255 * 100)
+            -- 使用四舍五入以匹配HA的显示
+            local brightnessPercent = math.floor(brightness / 255 * 100 + 0.5)
             -- 在0.1%-0.9%范围内显示为1%
             if brightnessPercent < 1 then
                 brightnessPercent = 1
@@ -1040,8 +1056,8 @@ local function f12AdjustBrightness()
             setF12Brightness(f12CurrentBrightness)
         end
     else
-        -- 减少亮度
-        local minBrightness = math.floor(255 * 0.02)  -- 0.5%对应的亮度值
+        -- 减少亮度，最低1%亮度
+        local minBrightness = 1
         local newBrightness = math.max(minBrightness, f12CurrentBrightness - brightnessStep)
         
         -- 如果达到最低亮度，停止调节
