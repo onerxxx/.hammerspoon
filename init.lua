@@ -7,7 +7,7 @@ hs.allowAppleScript(true)
 -- 居中置顶样式配置
 local centerTopStyle = {
     textFont = "misans medium",
-    textSize = 15,
+    textSize = 14,
     textColor = {hex = "#ffffff", alpha = 0.9},
     fillColor = {hex = "#28302f", alpha = 0.9},
     strokeColor = {hex = "#564c49", alpha = 0.8},

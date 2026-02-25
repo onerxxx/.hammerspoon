@@ -2,7 +2,7 @@
 -- 自定义通知样式 - 缩小字体
 local smallerFontStyle = {
     textFont = "misans Demibold",
-    textSize = 14.4,  -- 缩小字体大小
+    textSize = 14,  -- 缩小字体大小
     textColor = {hex = "#ffffff", alpha = 0.9},  
     fillColor = {hex = "#000000", alpha = 1},  -- 设置为半透明深灰色背景
     strokeColor = {hex = "#eeeeee", alpha = 0.1},  -- 边框颜色
