@@ -7,7 +7,7 @@ local smallerFontStyle = {
     fillColor = {hex = "#000000", alpha = 1},  -- 设置为半透明深灰色背景
     strokeColor = {hex = "#eeeeee", alpha = 0.1},  -- 边框颜色
     radius = 13, -- 圆角大小
-    padding = 21, -- 内间距
+    padding = 18, -- 内间距
     fadeInDuration = 0.2,  -- 快速淡入
     fadeOutDuration = 0.3, -- 平滑淡出
     strokeWidth = 0,  -- 移除边框
