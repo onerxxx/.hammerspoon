@@ -43,11 +43,6 @@ local function showCustomAlert(message, topMargin, duration, screen)
     hs.alert.show(message, screen, customStyle, duration)
 end
 
--- 关闭所有自定义 alert（简化版本，不需要实际操作）
-local function closeAllCustomAlerts()
-    -- 由于使用原生 hs.alert.show，不需要手动管理 canvas
-end
-
 -- 下载工具模块
 require('xdownie')
 -- HomeAssistant智能家居控制模块

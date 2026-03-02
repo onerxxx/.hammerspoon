@@ -39,14 +39,9 @@ local function showCustomAlert(message, topMargin, duration, screen)
 end
 
 
--- 初始化自定义alerts数组
-local customAlerts = {}
-
 -- 关闭所有自定义 alert
 local function closeAllCustomAlerts()
-    -- 使用hs.alert.closeAll()来关闭所有alert
     hs.alert.closeAll()
-    customAlerts = {}
 end
 
 -- 启动应用程序，如果已启动则忽略
@@ -101,6 +96,14 @@ local APPGRID_INFO = {
     displayName = "AppGrid",
     -- 可能的应用名称变体
     possibleNames = {"AppGrid"}
+}
+
+-- Dropover应用信息
+local DROPOVER_INFO = {
+    bundleID = "com.dropoverapp.dropover",
+    displayName = "Dropover",
+    -- 可能的应用名称变体
+    possibleNames = {"Dropover"}
 }
 
 -- 延迟创建窗口过滤器，避免影响重新加载速度
@@ -160,15 +163,25 @@ local function debugPrint(...)
     end
 end
 
--- 检查AppGrid是否正在运行
-local function isAppGridRunning()
+-- 通用函数：检查应用是否正在运行
+local function isAppRunning(bundleID, appName)
     local apps = hs.application.runningApplications()
     for _, app in pairs(apps) do
-        if app:bundleID() == APPGRID_INFO.bundleID or app:name() == APPGRID_INFO.displayName then
+        if app:bundleID() == bundleID or app:name() == appName then
             return true
         end
     end
     return false
+end
+
+-- 检查AppGrid是否正在运行
+local function isAppGridRunning()
+    return isAppRunning(APPGRID_INFO.bundleID, APPGRID_INFO.displayName)
+end
+
+-- 检查Dropover是否正在运行
+local function isDropoverRunning()
+    return isAppRunning(DROPOVER_INFO.bundleID, DROPOVER_INFO.displayName)
 end
 
 -- 启动AppGrid应用
@@ -179,6 +192,19 @@ local function launchAppGrid()
             hs.application.launchOrFocus(APPGRID_INFO.displayName)
         end
         showCustomAlert("🚀 启动 AppGrid", 50, 2)
+        return true
+    end
+    return false
+end
+
+-- 启动Dropover应用
+local function launchDropover()
+    if not isDropoverRunning() then
+        local launched = hs.application.launchOrFocusByBundleID(DROPOVER_INFO.bundleID)
+        if not launched then
+            hs.application.launchOrFocus(DROPOVER_INFO.displayName)
+        end
+        showCustomAlert("🚀 启动 Dropover", 50, 2)
         return true
     end
     return false
@@ -516,20 +542,24 @@ local function hideTriggerArea()
     debugPrint("🧹 手动隐藏触发区域")
 end
 
--- 在Hammerspoon启动时运行PasteNow（延迟3秒执行，避免阻塞reload）
-hs.timer.doAfter(3, function()
-    launchPasteNow()
-end)
+-- 在Hammerspoon启动时运行PasteNow
+launchPasteNow()
+
+-- 在Hammerspoon启动时运行Dropover
+launchDropover()
 
 return {
     launchApp = launchApp,
     launchPasteNow = launchPasteNow,
     launchAppGrid = launchAppGrid,
+    launchDropover = launchDropover,
     isAppGridRunning = isAppGridRunning,
+    isDropoverRunning = isDropoverRunning,
     getDouyinWindowFilter = function() return douyinWindowFilter end,
     getSecondaryScreen = getSecondaryScreen,
     DOUYIN_APP_INFO = DOUYIN_APP_INFO,
     APPGRID_INFO = APPGRID_INFO,
+    DROPOVER_INFO = DROPOVER_INFO,
     -- 调试函数
     showTriggerArea = showTriggerArea,  -- 可选参数：指定显示器名称，默认为"LG HDR WQHD"
     hideTriggerArea = hideTriggerArea,

@@ -5,6 +5,8 @@ local twitterPrefix = "https://x.com/i/status/"
 local weiboPrefix = "https://video.weibo.com/"
 local douyinPrefix = "https://v.douyin.com/"
 local sinaShortPrefix = "http://t.cn/"
+local xiaohongshuPrefix = "https://www.xiaohongshu.com/explore/"
+local xiaohongshuDiscoveryPrefix = "https://www.xiaohongshu.com/discovery/item/"
 
 -- 创建一个日志函数，方便调试
 local function log(message)
@@ -43,6 +45,8 @@ local function handleClipboardChange()
     local weiboLink = extractLink(currentContent, weiboPrefix)
     local douyinLink = extractLink(currentContent, douyinPrefix)
     local sinaShortLink = extractLink(currentContent, sinaShortPrefix)
+    local xiaohongshuLink = extractLink(currentContent, xiaohongshuPrefix)
+    local xiaohongshuDiscoveryLink = extractLink(currentContent, xiaohongshuDiscoveryPrefix)
     
     -- 确定要处理的链接和类型
     local linkToProcess = nil
@@ -60,6 +64,12 @@ local function handleClipboardChange()
     elseif sinaShortLink then
         linkToProcess = sinaShortLink
         linkType = "新浪短链接"
+    elseif xiaohongshuLink then
+        linkToProcess = xiaohongshuLink
+        linkType = "小红书"
+    elseif xiaohongshuDiscoveryLink then
+        linkToProcess = xiaohongshuDiscoveryLink
+        linkType = "小红书"
     end
     
     -- 如果找到了支持的链接，则处理它

@@ -137,9 +137,9 @@ local function showCustomAlert(message, topMargin, duration, screen)
     hs.alert.show(message, screen, customStyle, duration)
 end
 
--- 关闭所有自定义 alert（简化版本，不需要实际操作）
+-- 关闭所有自定义 alert
 local function closeAllCustomAlerts()
-    -- 由于使用原生 hs.alert.show，不需要手动管理 canvas
+    hs.alert.closeAll()
 end
 
 -- 获取设备状态
@@ -789,71 +789,10 @@ end, function()
     f9IsLongPress = false
 end)
 
--- F9 控制相关变量
-local f9PressTime = nil
-local f9Timer = nil
-local f9BrightnessTimer = nil
-local f9BrightnessDirection = 1  -- 1为增加亮度，-1为减少亮度
-local f9CurrentBrightness = 128
-local f9IsLongPress = false
-local f9EntityId = "light.ding_deng"  -- F9控制的设备ID
-
--- 获取F9设备的当前亮度
-local function getF9Brightness(callback, showError)
-    local headers = {
-        ["Authorization"] = "Bearer " .. config.token,
-        ["Content-Type"] = "application/json"
-    }
-    
-    local statusUrl = config.baseUrl .. "api/states/" .. f9EntityId
-    
-    hs.http.asyncGet(statusUrl, headers, function(code, body, headers)
-        if code == 200 then
-            local state = hs.json.decode(body)
-            if state and state.attributes and state.attributes.brightness then
-                callback(state.attributes.brightness)
-            else
-                if showError then
-                    showCustomAlert("⚠️ 无法获取顶灯亮度信息", 50, 2)
-                end
-                callback(nil)
-            end
-        else
-            if showError then
-                showCustomAlert("❌ 获取顶灯亮度失败，错误码: " .. code, 50, 2)
-            end
-            callback(nil)
-        end
-    end)
-end
-
--- 设置F9设备的亮度 (第二个定义，已修复)
-local function setF9Brightness(brightness)
-    local serviceData = {
-        entity_id = f9EntityId,
-        brightness = brightness
-    }
-    
-    local url = config.baseUrl .. "api/services/light/turn_on"
-    local headers = {
-        ["Authorization"] = "Bearer " .. config.token,
-        ["Content-Type"] = "application/json"
-    }
-    
-    hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
-        if code == 200 or code == 201 then
-            closeAllCustomAlerts()
-            -- 使用四舍五入以匹配HA的显示
-            local brightnessPercent = math.floor(brightness / 255 * 100 + 0.5)
-            if brightnessPercent < 1 then
-                brightnessPercent = 1
-            end
-            showCustomAlert(string.format("💡顶灯亮度 : %d%%", brightnessPercent), 50, 1.2)
-        else
-            showCustomAlert("❌ 设置顶灯亮度失败: " .. code, 50, 2)
-        end
-    end)
-end
+-- F10 控制相关变量
+local f10EntityId = "light.ding_deng"  -- F10控制的设备ID
+local f10Timer = nil
+local f10BrightnessTimer = nil
 
 -- 获取F10设备的当前亮度
 local function getF10Brightness(callback, showError)
@@ -912,53 +851,6 @@ local function setF10Brightness(brightness)
         end
     end)
 end
-
--- 停止F9亮度调节
-local function f9StopBrightnessAdjustment()
-    if f9BrightnessTimer then
-        f9BrightnessTimer:stop()
-        f9BrightnessTimer = nil
-    end
-end
-
--- F9 亮度渐变函数
-local function f9AdjustBrightness()
-    local brightnessStep = math.floor(255 * 0.1)  -- 10%步进，约25.5个亮度单位
-    
-    if f9BrightnessDirection == 1 then
-        -- 增加亮度
-        local newBrightness = math.min(255, f9CurrentBrightness + brightnessStep)
-        
-        -- 如果达到最高亮度，停止调节
-        if newBrightness >= 255 then
-            f9CurrentBrightness = 255
-            setF9Brightness(f9CurrentBrightness)
-            showCustomAlert("🔆顶灯亮度已最高", 50, 2)
-            f9StopBrightnessAdjustment()
-            return
-        else
-            f9CurrentBrightness = newBrightness
-            setF9Brightness(f9CurrentBrightness)
-        end
-    else
-        -- 减少亮度，最低1%亮度
-        local minBrightness = 1
-        local newBrightness = math.max(minBrightness, f9CurrentBrightness - brightnessStep)
-        
-        -- 如果达到最低亮度，停止调节
-        if newBrightness <= minBrightness then
-            f9CurrentBrightness = minBrightness
-            setF9Brightness(f9CurrentBrightness)
-            showCustomAlert("🔅顶灯亮度已最低", 50, 2)
-            f9StopBrightnessAdjustment()
-            return
-        else
-            f9CurrentBrightness = newBrightness
-            setF9Brightness(f9CurrentBrightness)
-        end
-    end
-end
-
 
 -- F12 亮度控制相关变量
 local f12PressTime = nil
