@@ -1,4 +1,5 @@
 -- 监听剪贴板并使用系统默认播放器打开网络视频文件
+local shutdownManager = require("shutdown_manager")
 
 -- 保存上一次的剪贴板内容，避免重复处理
 local lastClipboardContent = ""
@@ -118,7 +119,7 @@ hs.hotkey.bind({"cmd", "alt", "ctrl"}, "V", function()
 end)
 
 -- 确保脚本退出时清理资源
-hs.shutdownCallback = function()
+shutdownManager.register("open_iina", function()
     clipboardWatcher:stop()
     log("剪贴板监听已停止")
-end
+end)

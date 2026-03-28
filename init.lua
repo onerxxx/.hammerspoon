@@ -55,6 +55,8 @@ require("open_iina")
 require("apps_shortcuts")
 -- 应用程序启动控制模块
 require("app_launch")
+-- AppGrid 触发模块
+require("appgrid")
 
 
 

@@ -1,5 +1,6 @@
 -- wheelzoom.lua
 -- 实现网页缩放功能：按住ctrl+滚轮时触发cmd+或cmd-
+local shutdownManager = require("shutdown_manager")
 
 -- 创建一个日志函数，方便调试
 local function log(message)
@@ -82,12 +83,12 @@ isWatcherInstalled = true
 
 
 -- 确保脚本退出时清理资源
-hs.shutdownCallback = function()
+shutdownManager.register("wheelzoom", function()
     if isWatcherInstalled then
         keyWatcher:stop()
         scrollWatcher:stop()
         log("网页缩放功能已停止")
     end
-end
+end)
 
 log("网页缩放模块加载完成")

@@ -1,4 +1,5 @@
 -- 监听剪贴板并使用Downie 4下载Twitter、微博和抖音视频链接
+local shutdownManager = require("shutdown_manager")
 
 -- 定义链接前缀
 local twitterPrefix = "https://x.com/i/status/"
@@ -108,7 +109,7 @@ hs.hotkey.bind({"cmd", "alt", "ctrl"}, "R", function()
 end)
 
 -- 确保脚本退出时清理资源
-hs.shutdownCallback = function()
+shutdownManager.register("xdownie", function()
     clipboardWatcher:stop()
     log("剪贴板监听已停止")
-end
+end)

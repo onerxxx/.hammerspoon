@@ -1,4 +1,7 @@
 -- 应用程序启动 
+local edgeControl = require("edge_control")
+local shutdownManager = require("shutdown_manager")
+
 -- 自定义通知样式 - 缩小字体
 local smallerFontStyle = {
     textFont = "misans Demibold",
@@ -89,9 +92,6 @@ local DOUYIN_APP_INFO = {
     -- 可能的应用名称变体
     possibleNames = {"抖音", "Douyin"}
 }
-
--- 引入 AppGrid 模块
-local appgrid = require("appgrid")
 
 -- Dropover应用信息
 local DROPOVER_INFO = {
@@ -231,13 +231,12 @@ local function initTopMiddleClickTrigger()
             
             -- 检查鼠标是否在顶部中央区域
             if isMouseInTopCenterArea(mousePos) then
-                debugPrint("顶部中键监听器: 鼠标在目标区域内，触发 Cmd+Opt+E")
+                debugPrint("顶部中键监听器: 鼠标在目标区域内，直接调用 Edge 新建窗口")
                 
                 -- 更新最后触发时间
                 lastTopClickTime = currentTime
                 
-                -- 模拟按下 cmd+opt+E
-                hs.eventtap.keyStroke({"cmd", "alt"}, "e")
+                edgeControl.openNewEdgeWindow()
                 
                 
                 return false
@@ -263,11 +262,11 @@ local function cleanupDebugElements()
 end
 
 -- 注册清理回调
-hs.shutdownCallback = function()
+shutdownManager.register("app_launch", function()
     cleanupDebugElements()
     closeAllCustomAlerts()
     debugPrint("👋 Hammerspoon 正在关闭，已清理所有资源")
-end
+end)
 
 -- 启动顶部中键点击监听
 initTopMiddleClickTrigger()
@@ -286,7 +285,5 @@ return {
     getDouyinWindowFilter = function() return douyinWindowFilter end,
     getSecondaryScreen = getSecondaryScreen,
     DOUYIN_APP_INFO = DOUYIN_APP_INFO,
-    DROPOVER_INFO = DROPOVER_INFO,
-    -- AppGrid 功能已移至独立模块
-    appgrid = appgrid
+    DROPOVER_INFO = DROPOVER_INFO
 }

@@ -6,6 +6,7 @@
 
 -- 引入显示亮度调节模块
 local displayBrightness = require("display_brightness")
+local shutdownManager = require("shutdown_manager")
 
 -- 配置参数
 local config = {}
@@ -613,7 +614,7 @@ local function startWatchers()
 end
 
 -- 注册清理函数
-hs.shutdownCallback = cleanup
+shutdownManager.register("ha_control", cleanup)
 
 
 

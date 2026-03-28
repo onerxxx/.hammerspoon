@@ -1,5 +1,6 @@
 -- AppGrid 触发模块
 -- 从 app_launch.lua 分离出来的 AppGrid 相关功能
+local shutdownManager = require("shutdown_manager")
 
 -- AppGrid应用信息
 local APPGRID_INFO = {
@@ -338,11 +339,11 @@ end
 init()
 
 -- 注册清理回调
-hs.shutdownCallback = function()
+shutdownManager.register("appgrid", function()
     cleanupDebugElements()
     closeAllCustomAlerts()
     debugPrint("👋 AppGrid 模块正在关闭，已清理所有资源")
-end
+end)
 
 -- 导出模块接口
 return {

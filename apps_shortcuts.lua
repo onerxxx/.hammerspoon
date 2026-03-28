@@ -1,3 +1,5 @@
+local shutdownManager = require("shutdown_manager")
+
 -- 初始化日志记录器
 local logger = hs.logger.new('apps_shortcuts', 'debug')
 
@@ -59,9 +61,9 @@ middleClickWatcher:start()
 
 
 -- 确保脚本退出时清理资源
-hs.shutdownCallback = function()
+shutdownManager.register("apps_shortcuts", function()
     if middleClickWatcher then
         middleClickWatcher:stop()
         log("鼠标中键监听已停止")
     end
-end
+end)
