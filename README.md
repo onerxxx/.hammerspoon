@@ -134,74 +134,11 @@ Moonlight 虚拟按键映射模块：
 
 ## 快捷键总览
 
-### 全局快捷键
-| 快捷键 | 功能 |
-|--------|------|
-| Cmd+Shift+R | 重新加载 Hammerspoon 配置 |
-
-### 浏览器控制
-| 快捷键 | 功能 |
-|--------|------|
-| Cmd+Alt+E | 在当前屏幕新建 Edge 窗口 |
-| Cmd+Alt+M | 将 Edge 标签页移动到其他屏幕 |
-
-### 文件夹同步
-| 快捷键 | 功能 |
-|--------|------|
-| Cmd+Alt+S | 手动触发文件夹同步 |
-
-### 智能家居控制 (Home Assistant)
-| 快捷键 | 功能 |
-|--------|------|
-| Ctrl+Alt+滚轮 | 控制灯光亮度 |
-| F9 | 控制顶灯（短按开关，长按调光） |
-| F10 | 控制顶灯 |
-| F12 | 控制台灯（短按开关，长按调光） |
-| F18 | 控制上台灯 |
-| Ctrl+PageUp | 桌面开灯场景 |
-| Ctrl+PageDown | 桌面关灯 |
-| Cmd+Alt+Ctrl+L | 重启灯光控制监听器 |
-
-### 抖音快捷键
-| 快捷键 | 功能 |
-|--------|------|
-| 鼠标中键点击 | 触发 Y+J 快捷操作 |
-| Cmd+Alt+Ctrl+M | 重启抖音快捷键监听器 |
-
-### 剪贴板监听
-| 快捷键 | 功能 |
-|--------|------|
-| Cmd+Alt+Ctrl+R | 重启 xdownie 剪贴板监听 |
-| Cmd+Alt+Ctrl+V | 重启 open_iina 剪贴板监听 |
-
-### 虚拟按键 (Moonlight)
-| 快捷键 | 功能 |
-|--------|------|
-| Cmd+Shift+V | 开启/关闭虚拟按键功能 |
-| Cmd+Shift+R | 重置按键状态 |
-| Cmd+Shift+Ctrl+S | 查看虚拟按键状态 |
-| Cmd+Shift+D | 测试 Moonlight 应用检测 |
-| Cmd+Shift+M | 显示组合键映射表 |
-| Cmd+Shift+Ctrl+T | 测试按键映射功能 |
-| Cmd+Shift+Ctrl+P | 诊断系统权限 |
-| Cmd+Shift+Ctrl+H | 显示帮助信息 |
-
-### 网页缩放
-| 快捷键 | 功能 |
-|--------|------|
-| Ctrl+滚轮 | 缩放网页（需按住 Ctrl） |
-
-
-
-## 配置文件说明
-
-### ha_config.json
-Home Assistant 智能家居控制配置文件，包含以下参数：
-- `token`: Home Assistant 访问令牌
-- `baseUrl`: Home Assistant 基础 URL
-- `entityId`: 默认控制的设备实体 ID
-- `scrollThrottleTime`: 滚轮调节间隔时间
-- `brightnessStep`: 亮度调节步长
-- `invertScrollDirection`: 是否反转滚轮方向
-- `debugMode`: 调试模式开关
-- `fastReload`: 快速重载模式
+- Cmd+Shift+R：重新加载 Hammerspoon 配置
+- Cmd+Alt+E：新建 Edge 窗口
+- Cmd+Alt+M：移动 Edge 标签页到其他屏幕
+- Cmd+Alt+S：手动触发文件夹同步
+- Cmd+Alt+Ctrl+M：重启抖音快捷键监听器
+- Cmd+Alt+Ctrl+V：重启剪贴板监听
+- Ctrl+PageUp：开启所有灯光
+- Ctrl+PageDown：关闭所有灯光
