@@ -1,6 +1,7 @@
 -- AppGrid 触发模块
 -- 从 app_launch.lua 分离出来的 AppGrid 相关功能
 local shutdownManager = require("shutdown_manager")
+local customAlert = require("custom_alert")
 
 -- AppGrid应用信息
 local APPGRID_INFO = {
@@ -25,47 +26,8 @@ local lastTriggerTime = 0
 local TRIGGER_COOLDOWN = 1.0
 local wasInCornerLastTick = false
 
--- 自定义通知样式
-local smallerFontStyle = {
-    textFont = "misans Demibold",
-    textSize = 14,
-    textColor = {hex = "#ffffff", alpha = 0.9},
-    fillColor = {hex = "#000000", alpha = 1},
-    strokeColor = {hex = "#eeeeee", alpha = 0.1},
-    radius = 13,
-    padding = 18,
-    fadeInDuration = 0.2,
-    fadeOutDuration = 0.3,
-    strokeWidth = 0,
-    atScreenEdge = 1,
-}
-
--- 显示自定义通知
-local function showCustomAlert(message, topMargin, duration, screen)
-    local customStyle = {
-        textFont = smallerFontStyle.textFont,
-        textSize = smallerFontStyle.textSize,
-        textColor = smallerFontStyle.textColor,
-        fillColor = smallerFontStyle.fillColor,
-        strokeColor = smallerFontStyle.strokeColor,
-        radius = smallerFontStyle.radius,
-        padding = smallerFontStyle.padding,
-        fadeInDuration = smallerFontStyle.fadeInDuration,
-        fadeOutDuration = smallerFontStyle.fadeOutDuration,
-        strokeWidth = smallerFontStyle.strokeWidth,
-        atScreenEdge = 1
-    }
-    
-    duration = duration or 2
-    screen = screen or hs.screen.primaryScreen()
-    
-    hs.alert.show(message, screen, customStyle, duration)
-end
-
--- 关闭所有自定义 alert
-local function closeAllCustomAlerts()
-    hs.alert.closeAll()
-end
+local showCustomAlert = customAlert.show
+local closeAllCustomAlerts = customAlert.closeAll
 
 -- 调试打印函数
 local function debugPrint(...)

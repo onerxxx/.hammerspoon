@@ -2,6 +2,11 @@
 -- 当在Moonlight应用中按下cmd键时，模拟键盘按下ctrl键
 
 local virtualKeys = {}
+local customAlert = require("custom_alert")
+
+local function showCustomAlert(message, duration, screen)
+    return customAlert.show(message, nil, duration, screen)
+end
 
 -- 按键状态管理
 local keyState = {
@@ -108,7 +113,7 @@ function showAlert(message, duration)
     end
     -- 使用正确的配置变量名
     if currentTime - lastAlertTime >= config.maxAlertFrequency then
-        hs.alert.show(message, duration or 1.0)
+        showCustomAlert(message, duration or 1.0)
         lastAlertTime = currentTime
     end
 end
@@ -550,7 +555,7 @@ function showKeyMappings()
         mappingText = mappingText .. "\n"
     end
     
-    hs.alert.show(mappingText, 8)
+    showCustomAlert(mappingText, 8)
     print("==================")
 end
 
@@ -561,7 +566,7 @@ function virtualKeys.testMoonlightDetection()
     
     if not frontApp then
         print("❌ 无法获取前台应用")
-        hs.alert.show("❌ 无法获取前台应用", 2)
+        showCustomAlert("❌ 无法获取前台应用", 2)
         return false
     end
     
@@ -588,7 +593,7 @@ function virtualKeys.testMoonlightDetection()
         isMoonlight and "✅ 是" or "❌ 否"
     )
     
-    hs.alert.show(alertText, 5)
+    showCustomAlert(alertText, 5)
     print("=== 测试完成 ===")
     return isMoonlight
 end
@@ -599,18 +604,18 @@ function virtualKeys.testKeyMapping()
     
     if not virtualKeys.isRunning() then
         print("❌ 虚拟按键功能未运行")
-        hs.alert.show("❌ 请先启动虚拟按键功能", 2)
+        showCustomAlert("❌ 请先启动虚拟按键功能", 2)
         return false
     end
     
     if not isMoonlightActive() then
         print("❌ 当前不在Moonlight应用中")
-        hs.alert.show("❌ 请在Moonlight应用中进行测试", 2)
+        showCustomAlert("❌ 请在Moonlight应用中进行测试", 2)
         return false
     end
     
     print("✅ 开始测试按键映射...")
-    hs.alert.show("🧪 测试模式\n请按 Cmd+C 测试复制功能", 3)
+    showCustomAlert("🧪 测试模式\n请按 Cmd+C 测试复制功能", 3)
     
     -- 设置测试模式标志
     keyState.testMode = true
@@ -619,7 +624,7 @@ function virtualKeys.testKeyMapping()
     hs.timer.doAfter(10, function()
         keyState.testMode = false
         print("🧪 测试模式结束")
-        hs.alert.show("🧪 测试模式结束", 1)
+        showCustomAlert("🧪 测试模式结束", 1)
     end)
     
     return true
@@ -665,7 +670,7 @@ function virtualKeys.diagnosePemissions()
         alertText = alertText .. "\n\n⚠️ 需要在系统偏好设置 > 安全性与隐私 > 隐私 > 辅助功能中授权Hammerspoon"
     end
     
-    hs.alert.show(alertText, 6)
+    showCustomAlert(alertText, 6)
     print("=== 诊断完成 ===")
     
     return hasAccessibility and canCreateEventTap and canSendKeys
@@ -699,10 +704,10 @@ local hotkeyConfigs = {
         callback = function()
             if virtualKeys.isRunning() then
                 virtualKeys.stop()
-                hs.alert.show("🎮 虚拟按键功能已关闭", 2)
+                showCustomAlert("🎮 虚拟按键功能已关闭", 2)
             else
                 virtualKeys.start()
-                hs.alert.show("🎮 虚拟按键功能已开启\nMoonlight中cmd键→ctrl键", 2)
+                showCustomAlert("🎮 虚拟按键功能已开启\nMoonlight中cmd键→ctrl键", 2)
             end
         end
     },
@@ -712,7 +717,7 @@ local hotkeyConfigs = {
         description = "紧急重置按键状态",
         callback = function()
             resetKeyState()
-            hs.alert.show("🔄 按键状态已重置", 1.5)
+            showCustomAlert("🔄 按键状态已重置", 1.5)
         end
     },
     {
@@ -732,7 +737,7 @@ local hotkeyConfigs = {
                 status.ctrlSimulated and "✅ 是" or "❌ 否",
                 status.isLongPress and "✅ 是" or "❌ 否"
             )
-            hs.alert.show(statusText, 3)
+            showCustomAlert(statusText, 3)
         end
     },
     {
@@ -798,7 +803,7 @@ function virtualKeys.showHelp()
     for _, bound in ipairs(boundHotkeys) do
         helpText = helpText .. bound.keys .. " - " .. bound.description .. "\n"
     end
-    hs.alert.show(helpText, 5)
+    showCustomAlert(helpText, 5)
     print("=== 虚拟按键快捷键帮助 ===")
     for _, bound in ipairs(boundHotkeys) do
         print(bound.keys .. " - " .. bound.description)

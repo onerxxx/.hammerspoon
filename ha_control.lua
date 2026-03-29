@@ -7,6 +7,7 @@
 -- 引入显示亮度调节模块
 local displayBrightness = require("display_brightness")
 local shutdownManager = require("shutdown_manager")
+local customAlert = require("custom_alert")
 
 -- 配置参数
 local config = {}
@@ -99,49 +100,8 @@ loadConfig()
 -- 以下是功能实现，一般不需要修改
 -- =====================================================
 
--- 自定义通知样式 - 缩小字体
-local smallerFontStyle = {
-    textFont = "misans Demibold",
-    textSize = 14.4,  -- 缩小字体大小
-    textColor = {hex = "#ffffff", alpha = 0.9},  
-    fillColor = {hex = "#000000", alpha = 1},  -- 设置为半透明深灰色背景
-    strokeColor = {hex = "#eeeeee", alpha = 0.1},  -- 边框颜色
-    radius = 13, -- 圆角大小
-    padding = 18, -- 内间距
-    fadeInDuration = 0.2,  -- 快速淡入
-    fadeOutDuration = 0.3, -- 平滑淡出
-    strokeWidth = 0,  -- 移除边框
-    atScreenEdge = 1, -- 居中置顶 (0=左上, 1=上中, 2=右上)
-}
-
--- 简化的自定义 alert 函数
-local function showCustomAlert(message, topMargin, duration, screen)
-    -- 暂时使用原始的 hs.alert.show，但修改样式以显示在顶部
-    local customStyle = {
-        textFont = smallerFontStyle.textFont,
-        textSize = smallerFontStyle.textSize,
-        textColor = smallerFontStyle.textColor,
-        fillColor = smallerFontStyle.fillColor,
-        strokeColor = smallerFontStyle.strokeColor,
-        radius = smallerFontStyle.radius,
-        padding = smallerFontStyle.padding,
-        fadeInDuration = smallerFontStyle.fadeInDuration,
-        fadeOutDuration = smallerFontStyle.fadeOutDuration,
-        strokeWidth = smallerFontStyle.strokeWidth,
-        atScreenEdge = 1 -- 居中置顶
-    }
-    
-    duration = duration or 2
-    screen = screen or hs.screen.primaryScreen()
-    
-    -- 使用原始的 hs.alert.show
-    hs.alert.show(message, screen, customStyle, duration)
-end
-
--- 关闭所有自定义 alert
-local function closeAllCustomAlerts()
-    hs.alert.closeAll()
-end
+local showCustomAlert = customAlert.show
+local closeAllCustomAlerts = customAlert.closeAll
 
 -- 获取设备状态
 local function getDeviceState(callback)
@@ -1045,7 +1005,7 @@ local function runScene(sceneEntityId)
     
     hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
         if code == 200 or code == 201 then
-   --         hs.alert.show("场景:桌面开灯", hs.screen.primaryScreen(), smallerFontStyle)
+   --         showCustomAlert("场景:桌面开灯", 50, 2)
         else
             -- 显示更详细的错误信息
             local errorMsg = "执行场景失败: " .. code

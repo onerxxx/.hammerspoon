@@ -1,47 +1,6 @@
 
-
-
 -- 启用AppleScript支持
 hs.allowAppleScript(true)
-
--- 居中置顶样式配置
-local centerTopStyle = {
-    textFont = "misans medium",
-    textSize = 14,
-    textColor = {hex = "#ffffff", alpha = 0.9},
-    fillColor = {hex = "#28302f", alpha = 0.9},
-    strokeColor = {hex = "#564c49", alpha = 0.8},
-    radius = 17,
-    padding = 30,
-    fadeInDuration = 0.1,
-    fadeOutDuration = 0.4,
-    strokeWidth = 8,
-    atScreenEdge = 1, -- 居中置顶 (0=左上, 1=上中, 2=右上)
-}
-
--- 简化的自定义 alert 函数
-local function showCustomAlert(message, topMargin, duration, screen)
-    -- 暂时使用原始的 hs.alert.show，但修改样式以显示在顶部
-    local customStyle = {
-        textFont = centerTopStyle.textFont,
-        textSize = centerTopStyle.textSize,
-        textColor = centerTopStyle.textColor,
-        fillColor = centerTopStyle.fillColor,
-        strokeColor = centerTopStyle.strokeColor,
-        radius = centerTopStyle.radius,
-        padding = centerTopStyle.padding,
-        fadeInDuration = centerTopStyle.fadeInDuration,
-        fadeOutDuration = centerTopStyle.fadeOutDuration,
-        strokeWidth = centerTopStyle.strokeWidth,
-        atScreenEdge = 1 -- 居中置顶
-    }
-    
-    duration = duration or 2
-    screen = screen or hs.screen.primaryScreen()
-    
-    -- 使用原始的 hs.alert.show
-    hs.alert.show(message, screen, customStyle, duration)
-end
 
 -- 下载工具模块
 require('xdownie')
