@@ -2,12 +2,12 @@ local M = {}
 
 local style = {
     textSize = 14,
-    textColor = {hex = "#ffffff", alpha = 0.9},
-    fillColor = {hex = "#1b1a25", alpha = 0.9},
-    strokeColor = {hex = "#000000", alpha = 0.1},
+    textColor = {hex = "#eeeeee", alpha = 0.9},
+    fillColor = {hex = "#000000", alpha = 1},
+    strokeColor = {hex = "#000000", alpha = 1},
     radius = 10,
-    padding = 12,
-    fadeInDuration = 0.2,
+    padding = 16,
+    fadeInDuration = 0.3,
     fadeOutDuration = 0.3,
     strokeWidth = 0,
     maxWidthRatio = 0.55,

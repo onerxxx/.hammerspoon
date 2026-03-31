@@ -3,14 +3,35 @@
 
 local M = {}
 
--- 模块配置
 local config = {}
 local logger = nil
 local illuminationTimer = nil
 local lastIlluminationValue = nil
+local lastBrightnessAdjustTime = nil
 
--- 光照传感器ID
-local illuminationSensorId = "sensor.xiaomi_pir1_45bb_illumination"
+local ILLUMINATION_SENSOR_ID = "sensor.xiaomi_pir1_45bb_illumination"
+local BETTER_DISPLAY_PATH = "/Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay"
+local ILLUMINATION_CHANGE_THRESHOLD = 4
+local BRIGHTNESS_ADJUST_INTERVAL = 300
+local MONITOR_INTERVAL = 300
+local FAST_RELOAD_DELAY = 20
+local DEFAULT_RELOAD_DELAY = 15
+local BRIGHTNESS_ICON = "􀻟"
+
+local DISPLAY_CONFIGS = {
+    {
+        name = "LG HDR WQHD",
+        low = "0.30",
+        medium = "0.31",
+        high = "0.32",
+    },
+    {
+        name = "AOC 27″",
+        low = "0.50",
+        medium = "0.51",
+        high = "0.52",
+    },
+}
 
 -- 初始化模块
 function M.init(moduleConfig, moduleLogger, showCustomAlert, closeAllCustomAlerts)
@@ -40,16 +61,19 @@ local function logError(message)
     end
 end
 
+local function buildHeaders()
+    return {
+        ["Authorization"] = "Bearer " .. config.token,
+        ["Content-Type"] = "application/json",
+    }
+end
+
 -- 获取传感器状态
 local function getSensorState(sensorId, callback)
-    local headers = {
-        ["Authorization"] = "Bearer " .. config.token,
-        ["Content-Type"] = "application/json"
-    }
-    
+    local headers = buildHeaders()
     local statusUrl = config.baseUrl .. "api/states/" .. sensorId
-    
-    hs.http.asyncGet(statusUrl, headers, function(code, body, headers)
+
+    hs.http.asyncGet(statusUrl, headers, function(code, body, _)
         if code == 200 then
             local state = hs.json.decode(body)
             if state and state.state then
@@ -66,76 +90,120 @@ local function getSensorState(sensorId, callback)
     end)
 end
 
+local function getDisplayBrightness(displayConfig, illumination)
+    if illumination < 30 then
+        return displayConfig.low
+    end
+
+    if illumination <= 38 then
+        return displayConfig.medium
+    end
+
+    return displayConfig.high
+end
+
+local function getBrightnessPercent(brightness)
+    return math.floor(tonumber(brightness) * 100)
+end
+
+local function showBrightnessAlert(lgBrightness, aocBrightness)
+    if M.closeAllCustomAlerts then
+        M.closeAllCustomAlerts()
+    end
+
+    if M.showCustomAlert then
+        M.showCustomAlert(
+            string.format(
+                "%s LG:%s%% AOC:%s%%",
+                BRIGHTNESS_ICON,
+                getBrightnessPercent(lgBrightness),
+                getBrightnessPercent(aocBrightness)
+            ),
+            50,
+            2
+        )
+    end
+end
+
+local function runBrightnessCommand(displayName, brightness, callback)
+    local command = string.format('%s set -name="%s" -brightness=%s', BETTER_DISPLAY_PATH, displayName, brightness)
+
+    hs.task.new("/bin/sh", function(exitCode, _, stdErr)
+        if exitCode ~= 0 then
+            log(string.format("%s 亮度设置失败 (退出码: %d): %s", displayName, exitCode, stdErr))
+            return
+        end
+
+        log(string.format("%s 亮度设置成功: %s", displayName, brightness))
+        if callback then
+            callback()
+        end
+    end, {"-c", command}):start()
+end
+
 -- 使用 BetterDisplay 应用设置显示器亮度
 local function setBrightnessWithCLI(illumination)
-    local lgBrightness, aocBrightness
-    
-    -- 根据光照度设置LG显示器亮度（使用小数格式）
-    if illumination < 30 then
-        lgBrightness = "0.30"  -- 30%
-    elseif illumination >= 30 and illumination <= 38 then
-        lgBrightness = "0.31"  -- 31%
-    else
-        lgBrightness = "0.32"  -- 32%
-    end
-    
-    -- 根据光照度设置AOC显示器亮度（使用小数格式）
-    if illumination < 30 then
-        aocBrightness = "0.50"  -- 50%
-    elseif illumination >= 30 and illumination <= 38 then
-        aocBrightness = "0.51"  -- 51%
-    else
-        aocBrightness = "0.52"  -- 52%
-    end
-    
-    -- 为两个显示器设置不同的亮度
-    local command1 = string.format('/Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay set -name="LG HDR WQHD" -brightness=%s', lgBrightness)
-    local command2 = string.format('/Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay set -name="AOC 27″" -brightness=%s', aocBrightness)
-    
-    log(string.format("光照度: %d lux, LG亮度: %s, AOC亮度: %s", illumination, lgBrightness, aocBrightness))
-    
-    -- 先执行第一个显示器的命令
-    hs.task.new("/bin/sh", function(exitCode1, stdOut1, stdErr1)
-        if exitCode1 == 0 then
-            log(string.format("LG HDR WQHD 亮度设置成功: %s", lgBrightness))
-            
-            -- 第一个显示器成功后，执行第二个显示器的命令
-            hs.task.new("/bin/sh", function(exitCode2, stdOut2, stdErr2)
-                if exitCode2 == 0 then
-                    log(string.format("AOC 27″ 亮度设置成功: %s", aocBrightness))
-                    -- 使用 SF Symbols 显示亮度调节提示
-                    local brightnessIcon = "􀻟"  -- 可以替换为 SF Symbol
+    local lgBrightness = getDisplayBrightness(DISPLAY_CONFIGS[1], illumination)
+    local aocBrightness = getDisplayBrightness(DISPLAY_CONFIGS[2], illumination)
 
-                    if M.closeAllCustomAlerts then
-                        M.closeAllCustomAlerts()  -- 清除之前的alert提示
-                    end
-                    if M.showCustomAlert then
-                        M.showCustomAlert(string.format("%s LG:%s%% AOC:%s%%", brightnessIcon, math.floor(tonumber(lgBrightness) * 100), math.floor(tonumber(aocBrightness) * 100)), 50, 2)
-                    end
-                else
-                    log(string.format("AOC 27″ 亮度设置失败 (退出码: %d): %s", exitCode2, stdErr2))
-                end
-            end, {"-c", command2}):start()
-        else
-            log(string.format("LG HDR WQHD 亮度设置失败 (退出码: %d): %s", exitCode1, stdErr1))
-        end
-    end, {"-c", command1}):start()
+    log(string.format("光照度: %d lux, LG亮度: %s, AOC亮度: %s", illumination, lgBrightness, aocBrightness))
+
+    runBrightnessCommand(DISPLAY_CONFIGS[1].name, lgBrightness, function()
+        runBrightnessCommand(DISPLAY_CONFIGS[2].name, aocBrightness, function()
+            showBrightnessAlert(lgBrightness, aocBrightness)
+        end)
+    end)
+end
+
+local function hasMeaningfulIlluminationChange(illumination)
+    return lastIlluminationValue == nil
+        or math.abs(illumination - lastIlluminationValue) > ILLUMINATION_CHANGE_THRESHOLD
+end
+
+local function getAdjustCooldown(currentTime)
+    if lastBrightnessAdjustTime == nil then
+        return 0
+    end
+
+    local elapsed = currentTime - lastBrightnessAdjustTime
+    if elapsed >= BRIGHTNESS_ADJUST_INTERVAL then
+        return 0
+    end
+
+    return BRIGHTNESS_ADJUST_INTERVAL - elapsed
 end
 
 -- 监控光照传感器
 local function monitorIlluminationSensor()
-    getSensorState(illuminationSensorId, function(illumination)
-        if illumination then
-            log(string.format("当前光照度: %d lux, 上次记录值: %s", illumination, tostring(lastIlluminationValue)))
-            
-            -- 检查光照度变化是否超过阈值
-             if lastIlluminationValue == nil or math.abs(illumination - lastIlluminationValue) > 4 then
-                 log("光照度变化超过4 lux，触发亮度调节")
-                 -- 使用 betterdisplaycli 控制显示器亮度
-                 setBrightnessWithCLI(illumination)
-                 lastIlluminationValue = illumination
-             end
+    getSensorState(ILLUMINATION_SENSOR_ID, function(illumination)
+        if not illumination then
+            return
         end
+
+        log(string.format("当前光照度: %d lux, 上次记录值: %s", illumination, tostring(lastIlluminationValue)))
+
+        if not hasMeaningfulIlluminationChange(illumination) then
+            return
+        end
+
+        local currentTime = os.time()
+        local remainingCooldown = getAdjustCooldown(currentTime)
+
+        if remainingCooldown > 0 then
+            local elapsed = BRIGHTNESS_ADJUST_INTERVAL - remainingCooldown
+            log(string.format(
+                "光照度变化超过%d lux，但距上次调整仅%d秒，需要等待%d秒后才能再次调整",
+                ILLUMINATION_CHANGE_THRESHOLD,
+                elapsed,
+                remainingCooldown
+            ))
+            return
+        end
+
+        log("光照度变化超过4 lux，且距上次调整已超过5分钟，触发亮度调节")
+        setBrightnessWithCLI(illumination)
+        lastIlluminationValue = illumination
+        lastBrightnessAdjustTime = currentTime
     end)
 end
 
@@ -144,15 +212,13 @@ function M.startIlluminationMonitoring()
     if illuminationTimer then
         illuminationTimer:stop()
     end
-    
-    -- 根据配置决定延迟时间
-    local delayTime = config.fastReload and 20 or 15
-    
-    -- 延迟启动，避免重载时的网络请求影响性能
+
+    local delayTime = config.fastReload and FAST_RELOAD_DELAY or DEFAULT_RELOAD_DELAY
+
     illuminationTimer = hs.timer.doAfter(delayTime, function()
-        monitorIlluminationSensor() -- 立即执行一次
-        illuminationTimer = hs.timer.doEvery(30, monitorIlluminationSensor)
-        log("光照传感器监控已启动")
+        monitorIlluminationSensor()
+        illuminationTimer = hs.timer.doEvery(MONITOR_INTERVAL, monitorIlluminationSensor)
+        log("光照传感器监控已启动（每5分钟检查一次）")
     end)
     log(string.format("光照传感器监控已计划启动（%d秒后）", delayTime))
 end
@@ -177,13 +243,14 @@ end
 
 -- 获取当前光照度（供外部调用）
 function M.getCurrentIllumination(callback)
-    getSensorState(illuminationSensorId, callback)
+    getSensorState(ILLUMINATION_SENSOR_ID, callback)
 end
 
 -- 清理资源
 function M.cleanup()
     M.stopIlluminationMonitoring()
     lastIlluminationValue = nil
+    lastBrightnessAdjustTime = nil
 end
 
 -- 重新配置模块
