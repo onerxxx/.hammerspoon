@@ -176,19 +176,24 @@ end
 -- 监控光照传感器
 local function monitorIlluminationSensor()
     getSensorState(ILLUMINATION_SENSOR_ID, function(illumination)
+        -- 没有拿到有效的光照值时，直接结束本次检查
         if not illumination then
             return
         end
 
+        -- 记录当前光照值和上一次参与判断的光照值，便于排查触发条件
         log(string.format("当前光照度: %d lux, 上次记录值: %s", illumination, tostring(lastIlluminationValue)))
 
+        -- 光照变化没有超过阈值时，不执行亮度调整
         if not hasMeaningfulIlluminationChange(illumination) then
             return
         end
 
+        -- 计算当前是否还处于亮度调整冷却时间内
         local currentTime = os.time()
         local remainingCooldown = getAdjustCooldown(currentTime)
 
+        -- 冷却时间未结束时，仅记录日志，不重复调整亮度
         if remainingCooldown > 0 then
             local elapsed = BRIGHTNESS_ADJUST_INTERVAL - remainingCooldown
             log(string.format(
@@ -200,8 +205,11 @@ local function monitorIlluminationSensor()
             return
         end
 
+        -- 光照变化达到阈值且冷却时间已过，执行显示器亮度调整
         log("光照度变化超过4 lux，且距上次调整已超过5分钟，触发亮度调节")
         setBrightnessWithCLI(illumination)
+
+        -- 更新最近一次用于判断的光照值和亮度调整时间
         lastIlluminationValue = illumination
         lastBrightnessAdjustTime = currentTime
     end)

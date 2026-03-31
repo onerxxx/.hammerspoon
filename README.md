@@ -78,6 +78,21 @@ Home Assistant 智能家居控制模块：
 - 读取 Home Assistant 光照传感器数据
 - 根据环境光照强度自动调节外接显示器亮度
 - 使用 BetterDisplay 应用控制显示器
+- 监控的光照传感器实体为 `sensor.xiaomi_pir1_45bb_illumination`
+- 启动后会先延迟一段时间再开始监控：
+  - `fastReload = true` 时延迟 20 秒
+  - 否则延迟 15 秒
+- 监控周期为每 5 分钟一次
+- 只有在以下条件同时满足时才会调整亮度：
+  - 当前光照值与上次记录值相比变化超过 4 lux
+  - 距离上次亮度调整已超过 5 分钟
+- 当前内置的显示器亮度映射策略如下：
+  - `illumination < 30` 时：LG `30%`，AOC `50%`
+  - `30 <= illumination <= 38` 时：LG `31%`，AOC `51%`
+  - `illumination > 38` 时：LG `32%`，AOC `52%`
+- 当前通过 BetterDisplay CLI 控制以下两台显示器：
+  - `LG HDR WQHD`
+  - `AOC 27″`
 
 ### edge_control.lua
 Microsoft Edge 浏览器窗口管理：
