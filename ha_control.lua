@@ -81,7 +81,7 @@ local function validateConfig()
     
     if #issues > 0 then
         local errorMsg = "HA配置问题:\n" .. table.concat(issues, "\n")
-        showCustomAlert("❌ " .. errorMsg, 50, 5)
+        customAlert.show("❌ " .. errorMsg, 50, 5)  -- 修改为使用模块化调用
         print("[ha_control] 配置验证失败:")
         for _, issue in ipairs(issues) do
             print("  - " .. issue)
@@ -92,16 +92,14 @@ local function validateConfig()
     return true
 end
 
--- 加载配置
-loadConfig()
-
-
-
 -- 以下是功能实现，一般不需要修改
 -- =====================================================
 
 local showCustomAlert = customAlert.show
 local closeAllCustomAlerts = customAlert.closeAll
+
+-- 加载配置
+loadConfig()
 
 -- 获取设备状态
 local function getDeviceState(callback)
@@ -598,8 +596,26 @@ local f9Timer = nil
 local f9BrightnessTimer = nil
 local f9BrightnessDirection = 1  -- 1为增加亮度，-1为减少亮度
 local f9CurrentBrightness = 128
+local f9PendingBrightness = nil
+local f9BrightnessRequestInFlight = false
+local f9HasBrightnessCache = false
 local f9IsLongPress = false
 local f9EntityId = "light.ding_deng"  -- F9控制的设备ID
+
+local function clampF9Brightness(brightness)
+    local numericBrightness = tonumber(brightness) or 128
+    numericBrightness = math.floor(numericBrightness + 0.5)
+    return math.max(1, math.min(255, numericBrightness))
+end
+
+local function showF9BrightnessAlert(brightness)
+    closeAllCustomAlerts()
+    local brightnessPercent = math.floor(brightness / 255 * 100 + 0.5)
+    if brightnessPercent < 1 then
+        brightnessPercent = 1
+    end
+    showCustomAlert(string.format("💡顶灯亮度 : %d%%", brightnessPercent), 50, 1.2)
+end
 
 -- 获取F9设备的当前亮度
 local function getF9Brightness(callback, showError)
@@ -614,7 +630,7 @@ local function getF9Brightness(callback, showError)
         if code == 200 then
             local state = hs.json.decode(body)
             if state and state.attributes and state.attributes.brightness then
-                callback(state.attributes.brightness)
+                callback(clampF9Brightness(state.attributes.brightness))
             else
                 if showError then
                     showCustomAlert("⚠️ 无法获取顶灯亮度信息", 50, 2)
@@ -630,11 +646,18 @@ local function getF9Brightness(callback, showError)
     end)
 end
 
--- 设置F9设备的亮度
-local function setF9Brightness(brightness)
+local function flushF9BrightnessRequest()
+    if f9BrightnessRequestInFlight or not f9PendingBrightness then
+        return
+    end
+
+    local brightnessToSend = f9PendingBrightness
+    f9PendingBrightness = nil
+    f9BrightnessRequestInFlight = true
+
     local serviceData = {
         entity_id = f9EntityId,
-        brightness = brightness
+        brightness = brightnessToSend
     }
     
     local url = config.baseUrl .. "api/services/light/turn_on"
@@ -644,18 +667,30 @@ local function setF9Brightness(brightness)
     }
     
     hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
+        f9BrightnessRequestInFlight = false
+
         if code == 200 or code == 201 then
-            closeAllCustomAlerts()
-            -- 使用四舍五入以匹配HA的显示
-            local brightnessPercent = math.floor(brightness / 255 * 100 + 0.5)
-            if brightnessPercent < 1 then
-                brightnessPercent = 1
-            end
-            showCustomAlert(string.format("💡顶灯亮度 : %d%%", brightnessPercent), 50, 1.2)
         else
             showCustomAlert("❌ 设置顶灯亮度失败: " .. code, 50, 2)
         end
+
+        flushF9BrightnessRequest()
     end)
+end
+
+-- 设置F9设备的亮度
+local function setF9Brightness(brightness, skipAlert)
+    local targetBrightness = clampF9Brightness(brightness)
+
+    f9CurrentBrightness = targetBrightness
+    f9HasBrightnessCache = true
+    f9PendingBrightness = targetBrightness
+
+    if not skipAlert then
+        showF9BrightnessAlert(targetBrightness)
+    end
+
+    flushF9BrightnessRequest()
 end
 
 -- 停止F9亮度调节
@@ -674,28 +709,24 @@ local function f9AdjustBrightness()
         -- 增加亮度
         local newBrightness = math.min(255, f9CurrentBrightness + brightnessStep)
         if newBrightness >= 255 then
-            f9CurrentBrightness = 255
-            setF9Brightness(f9CurrentBrightness)
+            setF9Brightness(255, true)
             showCustomAlert("🔆顶灯亮度已最高", 50, 2)
             f9StopBrightnessAdjustment()
             return
         else
-            f9CurrentBrightness = newBrightness
-            setF9Brightness(f9CurrentBrightness)
+            setF9Brightness(newBrightness)
         end
     else
         -- 减少亮度，最低1%亮度
         local minBrightness = 1
         local newBrightness = math.max(minBrightness, f9CurrentBrightness - brightnessStep)
         if newBrightness <= minBrightness then
-            f9CurrentBrightness = minBrightness
-            setF9Brightness(f9CurrentBrightness)
+            setF9Brightness(minBrightness, true)
             showCustomAlert("🔅顶灯亮度已最低", 50, 2)
             f9StopBrightnessAdjustment()
             return
         else
-            f9CurrentBrightness = newBrightness
-            setF9Brightness(f9CurrentBrightness)
+            setF9Brightness(newBrightness)
         end
     end
 end
@@ -705,12 +736,17 @@ hs.hotkey.bind({}, "f9", function()
     f9PressTime = hs.timer.secondsSinceEpoch()
     f9IsLongPress = false
     
-    -- 获取当前亮度作为起始值（静默获取，不显示错误）
+    -- 后台同步一次真实亮度；如果本地已经开始调节，则保留本地目标值。
     getF9Brightness(function(currentBrightness)
-        if currentBrightness then
+        if currentBrightness and not f9IsLongPress and not f9BrightnessTimer and not f9PendingBrightness and not f9BrightnessRequestInFlight then
             f9CurrentBrightness = currentBrightness
+            f9HasBrightnessCache = true
         end
     end, false)
+
+    if not f9HasBrightnessCache then
+        f9CurrentBrightness = clampF9Brightness(f9CurrentBrightness)
+    end
     
     -- 设置0.5秒后开始亮度调节的定时器
     f9Timer = hs.timer.doAfter(0.5, function()

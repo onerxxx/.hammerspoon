@@ -1,20 +1,20 @@
 local M = {}
 
 local style = {
-    textSize = 14,
-    textColor = {hex = "#eeeeee", alpha = 0.9},
-    fillColor = {hex = "#000000", alpha = 1},
-    strokeColor = {hex = "#000000", alpha = 1},
-    radius = 10,
-    padding = 16,
-    fadeInDuration = 0.3,
-    fadeOutDuration = 0.3,
-    strokeWidth = 0,
-    maxWidthRatio = 0.55,
+    textSize = 13.5,                            -- 文字大小
+    textColor = { hex = "#eeeeee", alpha = 1 }, -- 文字颜色 (十六进制色值, 透明度)
+    fillColor = { hex = "#000000", alpha = 1 }, -- 填充颜色 (背景色)
+    strokeColor = { hex = "#000000", alpha = 1 }, -- 描边颜色
+    radius = 8,                                 -- 圆角半径 (像素)
+    padding = 18,                               -- 内边距 (像素)
+    fadeInDuration = 0.3,                       -- 淡入动画持续时间 (秒)
+    fadeOutDuration = 0.3,                      -- 淡出动画持续时间 (秒)
+    strokeWidth = 0,                            -- 描边宽度 (像素, 0表示无描边)
+    maxWidthRatio = 0.55,                       -- 最大宽度比例 (相对于屏幕宽度)
 }
 
 local alertGap = 0
-local defaultAlertTopPadding = -10
+local defaultAlertTopPadding = -30 -- 消息框距离顶部的间距
 local legacyAlertTopMargin = 50
 local activeAlerts = {}
 local resolvedFont = nil
@@ -30,9 +30,9 @@ local function resolveFont()
     end
 
     local preferredFonts = {
-        {family = "MiSans", font = "MiSans Demibold"},
-        {family = "PingFang SC", font = "PingFang SC Semibold"},
-        {family = "SF Pro Text", font = "SF Pro Text Semibold"},
+        { family = "MiSans",      font = "MiSans Demibold" },
+        { family = "PingFang SC", font = "PingFang SC Semibold" },
+        { family = "SF Pro Text", font = "SF Pro Text Semibold" },
     }
 
     for _, candidate in ipairs(preferredFonts) do
@@ -186,7 +186,7 @@ function M.show(message, topMargin, duration, screen)
 
     local alertCanvas = hs.canvas.new(alertFrame)
     alertCanvas:level("status")
-    alertCanvas:behavior({"canJoinAllSpaces", "stationary"})
+    alertCanvas:behavior({ "canJoinAllSpaces", "stationary" })
     alertCanvas:clickActivating(false)
 
     alertCanvas[1] = {
