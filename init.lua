@@ -6,6 +6,7 @@ hs.allowAppleScript(true)
 require('xdownie')
 -- HomeAssistant智能家居控制模块
 require("ha_control")
+local customAlert = require("custom_alert")
 -- Microsoft Edge浏览器控制模块
 require("edge_control")
 -- IINA播放器快捷操作模块
@@ -21,6 +22,6 @@ require("appgrid")
 
 -- 绑定快捷键 Cmd+Shift+R 来重新加载 Hammerspoon 配置
 hs.hotkey.bind({"cmd", "shift"}, "r", function()
-    hs.reload()
-   
+    customAlert.show("配置重载中...", 550, 2)
+    hs.timer.doAfter(0.1, hs.reload)
 end)
