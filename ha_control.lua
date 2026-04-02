@@ -81,7 +81,7 @@ local function validateConfig()
     
     if #issues > 0 then
         local errorMsg = "HA配置问题:\n" .. table.concat(issues, "\n")
-        customAlert.show("❌ " .. errorMsg, 50, 5)  -- 修改为使用模块化调用
+        customAlert.show("❌ " .. errorMsg)  -- 修改为使用模块化调用
         print("[ha_control] 配置验证失败:")
         for _, issue in ipairs(issues) do
             print("  - " .. issue)
@@ -116,11 +116,11 @@ local function getDeviceState(callback)
             if state and state.state then
                 callback(state.state)
             else
-                showCustomAlert("⚠️ 无法解析设备状态", 50, 2)
+                showCustomAlert("⚠️ 无法解析设备状态")
                 callback(nil)
             end
         else
-            showCustomAlert("❌ 获取设备状态失败，错误码: " .. code, 50, 2)
+            showCustomAlert("❌ 获取设备状态失败，错误码: " .. code)
             callback(nil)
         end
     end)
@@ -161,16 +161,16 @@ local function toggleDevice(entityId)
             
             -- 根据设备类型显示不同的消息
             if string.find(targetEntityId, "button.yeelink_colora_6b37_toggle") then
-                showCustomAlert("🌻切换顶灯开关", 50, 2)
+                showCustomAlert("🌻切换顶灯开关")
             elseif string.find(targetEntityId, "yeelink_cn_404173164_stripa_s_2") then
-                showCustomAlert("🌈切换灯带开关", 50, 2)
+                showCustomAlert("🌈切换灯带开关")
             elseif string.find(targetEntityId, "button.yeelink_lamp2_e655_toggle") then
-                showCustomAlert("📝切换台灯开关", 50, 2)
+                showCustomAlert("📝切换台灯开关")
             else
-                showCustomAlert("✅" .. deviceType .. "切换成功", 50, 2)
+                showCustomAlert("✅" .. deviceType .. "切换成功")
             end
         else
-            showCustomAlert("❌ 控制" .. deviceType .. "失败: " .. code, 50, 2)
+            showCustomAlert("❌ 控制" .. deviceType .. "失败: " .. code)
         end
     end)
 end
@@ -236,11 +236,11 @@ local function getBrightness(callback)
             if state and state.attributes and state.attributes.brightness then
                 callback(state.attributes.brightness)
             else
-             --   showCustomAlert("⚠️ 无法获取亮度信息", 50, 2)
+             --   showCustomAlert("⚠️ 无法获取亮度信息")
                 callback(nil)
             end
         else
-            showCustomAlert("❌获取亮度失败，错误码: " .. code, 50, 2)
+            showCustomAlert("❌获取亮度失败，错误码: " .. code)
             callback(nil)
         end
     end)
@@ -268,9 +268,9 @@ local function setBrightness(brightness)
             if brightnessPercent < 1 then
                 brightnessPercent = 1
             end
-            showCustomAlert(string.format("💡亮度 : %d%%", brightnessPercent), 50, 1.2)
+            showCustomAlert(string.format("💡亮度 : %d%%", brightnessPercent))
         else
-            showCustomAlert("❌设置亮度失败: " .. code, 50, 2)
+            showCustomAlert("❌设置亮度失败: " .. code)
         end
     end)
 end
@@ -582,7 +582,7 @@ shutdownManager.register("ha_control", cleanup)
 hs.hotkey.bind({"cmd", "alt", "ctrl"}, "L", function()
     if isWatcherInstalled then
         cleanup()
-        showCustomAlert("⏹️ 灯光控制监听器已停止", 50, 2)
+        showCustomAlert("⏹️ 灯光控制监听器已停止")
     else
         startWatchers()
     end
@@ -611,7 +611,7 @@ local function showF9BrightnessAlert(brightness)
     if brightnessPercent < 1 then
         brightnessPercent = 1
     end
-    customAlert.showKeyed("ha_brightness_f9", string.format("🌻顶灯亮度 : %d%%", brightnessPercent), 50, 1.2)
+    customAlert.showKeyed("ha_brightness_f9", string.format("🌻顶灯亮度 : %d%%", brightnessPercent))
 end
 
 -- 获取F9设备的当前亮度
@@ -630,13 +630,13 @@ local function getF9Brightness(callback, showError)
                 callback(clampF9Brightness(state.attributes.brightness))
             else
                 if showError then
-                    showCustomAlert("⚠️ 无法获取顶灯亮度信息", 50, 2)
+                    showCustomAlert("⚠️ 无法获取顶灯亮度信息")
                 end
                 callback(nil)
             end
         else
             if showError then
-                showCustomAlert("❌ 获取顶灯亮度失败，错误码: " .. code, 50, 2)
+                showCustomAlert("❌ 获取顶灯亮度失败，错误码: " .. code)
             end
             callback(nil)
         end
@@ -668,7 +668,7 @@ local function flushF9BrightnessRequest()
 
         if code == 200 or code == 201 then
         else
-            showCustomAlert("❌ 设置顶灯亮度失败: " .. code, 50, 2)
+            showCustomAlert("❌ 设置顶灯亮度失败: " .. code)
         end
 
         flushF9BrightnessRequest()
@@ -804,13 +804,13 @@ local function getF10Brightness(callback, showError)
                 callback(state.attributes.brightness)
             else
                 if showError then
-                    showCustomAlert("⚠️ 无法获取顶灯亮度信息", 50, 2)
+                    showCustomAlert("⚠️ 无法获取顶灯亮度信息")
                 end
                 callback(nil)
             end
         else
             if showError then
-                showCustomAlert("❌ 获取顶灯亮度失败，错误码: " .. code, 50, 2)
+                showCustomAlert("❌ 获取顶灯亮度失败，错误码: " .. code)
             end
             callback(nil)
         end
@@ -839,9 +839,9 @@ local function setF10Brightness(brightness)
             if brightnessPercent < 1 then
                 brightnessPercent = 1
             end
-            showCustomAlert(string.format("💡顶灯亮度 : %d%%", brightnessPercent), 50, 1.2)
+            showCustomAlert(string.format("💡顶灯亮度 : %d%%", brightnessPercent))
         else
-            showCustomAlert("❌ 设置顶灯亮度失败: " .. code, 50, 2)
+            showCustomAlert("❌ 设置顶灯亮度失败: " .. code)
         end
     end)
 end
@@ -869,7 +869,7 @@ local function showF12BrightnessAlert(brightness)
     if brightnessPercent < 1 then
         brightnessPercent = 1
     end
-    customAlert.showKeyed("ha_brightness_f12", string.format("📝台灯亮度 : %d%%", brightnessPercent), 50, 1.2)
+    customAlert.showKeyed("ha_brightness_f12", string.format("📝台灯亮度 : %d%%", brightnessPercent))
 end
 
 -- 获取F12设备的当前亮度
@@ -888,13 +888,13 @@ local function getF12Brightness(callback, showError)
                 callback(clampF12Brightness(state.attributes.brightness))
             else
                 if showError then
-                    showCustomAlert("⚠️ 无法获取台灯亮度信息", 50, 2)
+                    showCustomAlert("⚠️ 无法获取台灯亮度信息")
                 end
                 callback(nil)
             end
         else
             if showError then
-                showCustomAlert("❌ 获取台灯亮度失败，错误码: " .. code, 50, 2)
+                showCustomAlert("❌ 获取台灯亮度失败，错误码: " .. code)
             end
             callback(nil)
         end
@@ -926,7 +926,7 @@ local function flushF12BrightnessRequest()
 
         if code == 200 or code == 201 then
         else
-            showCustomAlert("❌ 设置台灯亮度失败: " .. code, 50, 2)
+            showCustomAlert("❌ 设置台灯亮度失败: " .. code)
         end
 
         flushF12BrightnessRequest()
@@ -1061,7 +1061,7 @@ local function runScene(sceneEntityId)
     
     hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
         if code == 200 or code == 201 then
-   --         showCustomAlert("场景:桌面开灯", 50, 2)
+   --         showCustomAlert("场景:桌面开灯")
         else
             -- 显示更详细的错误信息
             local errorMsg = "执行场景失败: " .. code
@@ -1071,7 +1071,7 @@ local function runScene(sceneEntityId)
                     errorMsg = errorMsg .. " - " .. errorData.message
                 end
             end
-            showCustomAlert(errorMsg, 50, 2)
+            showCustomAlert(errorMsg)
         end
     end)
 end
@@ -1117,7 +1117,7 @@ do shell script "shortcuts run 'Deskoff'"
             closeAllCustomAlerts() -- 关闭所有已存在的alert
             showCustomAlert("💡顶灯已关闭")
         else
-            showCustomAlert("❌关闭顶灯失败: " .. code, 50, 2)
+            showCustomAlert("❌关闭顶灯失败: " .. code)
         end
     end)
 end)
@@ -1134,7 +1134,7 @@ if configValid then
     
     -- 异步显示初始化提示
     hs.timer.doAfter(0.5, function()
-        showCustomAlert("👌🏻 HA控制初始化成功")
+        showCustomAlert("👌🏻初始化成功")
     end)
 else
     -- 配置无效时的处理
