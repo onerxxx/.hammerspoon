@@ -22,6 +22,6 @@ require("appgrid")
 
 -- 绑定快捷键 Cmd+Shift+R 来重新加载 Hammerspoon 配置
 hs.hotkey.bind({"cmd", "shift"}, "r", function()
-    customAlert.show("配置重载中...", 550, 2)
+    customAlert.show("配置重载中...")
     hs.timer.doAfter(0.1, hs.reload)
 end)

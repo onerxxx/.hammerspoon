@@ -191,9 +191,9 @@ local function turnOn()
         if code == 200 or code == 201 then
             closeAllCustomAlerts() -- 关闭所有已存在的alert
 
-            showCustomAlert("💡灯光已打开", 50, 2)
+            showCustomAlert("灯光已打开")
         else
-            showCustomAlert("❌打开灯失败: " .. code, 50, 2)
+            showCustomAlert("打开灯失败: " .. code)
         end
     end)
 end
@@ -214,9 +214,9 @@ local function turnOff()
         if code == 200 or code == 201 then
             closeAllCustomAlerts() -- 关闭所有已存在的alert
 
-            showCustomAlert("💡灯光已关闭", 50, 2)
+            showCustomAlert("灯光已关闭")
         else
-            showCustomAlert("❌关闭灯失败: " .. code, 50, 2)
+            showCustomAlert("关闭灯失败: " .. code)
         end
     end)
 end
@@ -1115,7 +1115,7 @@ do shell script "shortcuts run 'Deskoff'"
     hs.http.asyncPost(url, hs.json.encode(serviceData), headers, function(code, body, headers)
         if code == 200 or code == 201 then
             closeAllCustomAlerts() -- 关闭所有已存在的alert
-            showCustomAlert("💡顶灯已关闭", 50, 2)
+            showCustomAlert("💡顶灯已关闭")
         else
             showCustomAlert("❌关闭顶灯失败: " .. code, 50, 2)
         end
@@ -1134,11 +1134,11 @@ if configValid then
     
     -- 异步显示初始化提示
     hs.timer.doAfter(0.5, function()
-        showCustomAlert("👌🏻 HA控制初始化成功", 50, 3)
+        showCustomAlert("👌🏻 HA控制初始化成功")
     end)
 else
     -- 配置无效时的处理
     hs.timer.doAfter(0.5, function()
-        showCustomAlert("⚠️ HA配置不完整，请检查 ha_config.json", 50, 5)
+        showCustomAlert("⚠️ HA配置不完整，请检查 ha_config.json")
     end)
 end
