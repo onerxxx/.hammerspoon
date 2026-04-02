@@ -59,7 +59,7 @@ local function launchAppGrid()
         if not launched then
             hs.application.launchOrFocus(APPGRID_INFO.displayName)
         end
-        showCustomAlert("🚀 启动 AppGrid", 50, 2)
+        showCustomAlert("🚀 启动 AppGrid")
         return true
     end
     return false
@@ -69,7 +69,7 @@ end
 local function simulateOptionSpace()
     hs.eventtap.keyStroke({'alt'}, 'space')
     if DEBUG_MODE then
-        showCustomAlert("⌨️ 触发 Option+空格", 50, 1)
+        showCustomAlert("⌨️ 触发 Option+空格")
     end
 end
 
