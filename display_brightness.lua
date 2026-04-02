@@ -14,8 +14,6 @@ local BETTER_DISPLAY_PATH = "/Applications/BetterDisplay.app/Contents/MacOS/Bett
 local ILLUMINATION_CHANGE_THRESHOLD = 4
 local BRIGHTNESS_ADJUST_INTERVAL = 300
 local MONITOR_INTERVAL = 300
-local FAST_RELOAD_DELAY = 20
-local DEFAULT_RELOAD_DELAY = 15
 local BRIGHTNESS_ICON = "􀻟"
 
 local DISPLAY_CONFIGS = {
@@ -112,16 +110,12 @@ local function showBrightnessAlert(lgBrightness, aocBrightness)
     end
 
     if M.showCustomAlert then
-        M.showCustomAlert(
-            string.format(
-                "%s LG:%s%% AOC:%s%%",
-                BRIGHTNESS_ICON,
-                getBrightnessPercent(lgBrightness),
-                getBrightnessPercent(aocBrightness)
-            ),
-            50,
-            2
-        )
+        M.showCustomAlert(string.format(
+            "%s LG:%s%% AOC:%s%%",
+            BRIGHTNESS_ICON,
+            getBrightnessPercent(lgBrightness),
+            getBrightnessPercent(aocBrightness)
+        ))
     end
 end
 
@@ -221,14 +215,9 @@ function M.startIlluminationMonitoring()
         illuminationTimer:stop()
     end
 
-    local delayTime = config.fastReload and FAST_RELOAD_DELAY or DEFAULT_RELOAD_DELAY
-
-    illuminationTimer = hs.timer.doAfter(delayTime, function()
-        monitorIlluminationSensor()
-        illuminationTimer = hs.timer.doEvery(MONITOR_INTERVAL, monitorIlluminationSensor)
-        log("光照传感器监控已启动（每5分钟检查一次）")
-    end)
-    log(string.format("光照传感器监控已计划启动（%d秒后）", delayTime))
+    monitorIlluminationSensor()
+    illuminationTimer = hs.timer.doEvery(MONITOR_INTERVAL, monitorIlluminationSensor)
+    log("光照传感器监控已启动（每5分钟检查一次）")
 end
 
 -- 停止光照传感器监控
