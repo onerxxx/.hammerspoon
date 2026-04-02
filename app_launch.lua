@@ -99,7 +99,7 @@ local function launchApp(appInfo, options)
     end
 
     if launched and options.notify then
-        showCustomAlert("🚀 已启动" .. appInfo.displayName, 50, 2)
+        showCustomAlert("🚀 已启动" .. appInfo.displayName)
     end
 
     return launched
@@ -204,12 +204,12 @@ local function moveDouyinWindow(window)
         hs.timer.doAfter(0.2, function()
             if window and window:isStandard() then
                 window:maximize()
-                showCustomAlert("次屏幕显示抖音", 50, 1, secondaryScreen)
+                showCustomAlert("次屏幕显示抖音")
             end
         end)
     else
         window:maximize()
-        showCustomAlert("⚠️ 未检测到次屏幕，在主屏幕最大化", 50, 2)
+        showCustomAlert("⚠️ 未检测到次屏幕，在主屏幕最大化")
     end
 
     return true
