@@ -3,41 +3,57 @@ local M = {}
 local style = {
     textSize = 14,                            -- 文字大小
     textColor = { hex = "#f2f2f2", alpha = 1 }, -- 文字颜色 (十六进制色值, 透明度)
-    fillColor = { hex = "#000000", alpha = 1 }, -- 填充颜色 (背景色)
-    strokeColor = { hex = "#46ff32", alpha = 1 }, -- 描边颜色
-    radius = 10,                                 -- 圆角半径 (像素)
-    padding = 18,                               -- 内边距 (像素)
-    fadeInDuration = 0.3,                       -- 淡入动画持续时间 (秒)
-    fadeOutDuration = 0.3,                      -- 淡出动画持续时间 (秒)
+    fillColor = { hex = "#111111", alpha = 0.96 }, -- 渐变不可用时的兜底背景色
+    fillGradient = "linear",                     -- 背景渐变类型
+    fillGradientAngle = 190,                      -- 轻微斜角度
+    fillGradientColors = {
+        { hex = "#000000", alpha = 1 },
+        { hex = "#000000", alpha = 1 },
+    },
+    strokeColor = { hex = "#9a9a9a", alpha = 0.9 }, -- 描边颜色
+    radius = 16,                                 -- 圆角半径 (像素)
+    padding = 20,                               -- 内边距 (像素)
+    fadeInDuration = 0.2,                       -- 淡入动画持续时间 (秒)
+    fadeOutDuration = 0.4,                      -- 淡出动画持续时间 (秒)
     strokeWidth = 0,                            -- 描边宽度 (像素, 0表示无描边)
     maxWidthRatio = 0.55,                       -- 最大宽度比例 (相对于屏幕宽度)
 }
 
 local alertGap = 0
-local defaultAlertTopPadding = -20 -- 消息框距离顶部的间距
+local defaultAlertTopPadding = -10 -- 消息框距离顶部的间距
 local legacyAlertTopMargin = 50
 local activeAlerts = {}
 local activeAlertsByKey = {}
 local resolvedFont = nil
 
+local function canUseFont(fontName)
+    if type(fontName) ~= "string" or fontName == "" then
+        return false
+    end
+
+    return pcall(function()
+        hs.drawing.getTextDrawingSize("Ag", {
+            font = fontName,
+            size = style.textSize,
+        })
+    end)
+end
+
 local function resolveFont()
-    if resolvedFont then
+    if resolvedFont and canUseFont(resolvedFont) then
         return resolvedFont
     end
 
-    local installedFamilies = {}
-    for _, family in ipairs(hs.styledtext.fontFamilies()) do
-        installedFamilies[family] = true
-    end
-
     local preferredFonts = {
-        { family = "HarmonyOS Sans OC", font = "HarmonyOS Sans OC Semibold" },
-        { family = "SF Pro Text", font = "SF Pro Text Semibold" },
+
+        "HarmonyOS Medium",
+        "SF Pro Text Semibold",
+        "SF Pro Text",
     }
 
     for _, candidate in ipairs(preferredFonts) do
-        if installedFamilies[candidate.family] then
-            resolvedFont = candidate.font
+        if canUseFont(candidate) then
+            resolvedFont = candidate
             return resolvedFont
         end
     end
@@ -155,6 +171,9 @@ local function applyAlertContent(alertEntry, text, fontName, textSize, alertSize
         type = "rectangle",
         action = style.strokeWidth > 0 and "strokeAndFill" or "fill",
         fillColor = style.fillColor,
+        fillGradient = style.fillGradient,
+        fillGradientAngle = style.fillGradientAngle,
+        fillGradientColors = style.fillGradientColors,
         strokeColor = style.strokeColor,
         strokeWidth = style.strokeWidth,
         roundedRectRadii = {
@@ -220,19 +239,29 @@ reflowAlerts = function()
     end
 end
 
-local function showInternal(message, topMargin, duration, screen, key)
+local function normalizeDisplayArgs(duration, topMargin, screen)
+    local normalizedDuration = tonumber(duration)
+    local normalizedTopMargin = tonumber(topMargin)
+
+    if normalizedDuration == nil then
+        normalizedDuration = 2
+    end
+
+    if not normalizedTopMargin then
+        normalizedTopMargin = getDefaultTopMargin(screen)
+    elseif normalizedTopMargin == legacyAlertTopMargin then
+        normalizedTopMargin = getDefaultTopMargin(screen)
+    end
+
+    return normalizedDuration, normalizedTopMargin
+end
+
+local function showInternal(message, duration, topMargin, screen, key)
     local fontName = resolveFont()
     local text = tostring(message or "")
 
-    duration = tonumber(duration) or 2
-    topMargin = tonumber(topMargin)
-    if not topMargin then
-        topMargin = getDefaultTopMargin(screen)
-    elseif topMargin == legacyAlertTopMargin then
-        topMargin = getDefaultTopMargin(screen)
-    end
-
     screen = screen or hs.screen.primaryScreen()
+    duration, topMargin = normalizeDisplayArgs(duration, topMargin, screen)
 
     local textSize, alertSize = buildAlertMetrics(text, fontName, screen)
 
@@ -280,12 +309,12 @@ local function showInternal(message, topMargin, duration, screen, key)
     return alertCanvas
 end
 
-function M.show(message, topMargin, duration, screen)
-    return showInternal(message, topMargin, duration, screen, nil)
+function M.show(message, duration, topMargin, screen)
+    return showInternal(message, duration, topMargin, screen, nil)
 end
 
-function M.showKeyed(key, message, topMargin, duration, screen)
-    return showInternal(message, topMargin, duration, screen, tostring(key or "default"))
+function M.showKeyed(key, message, duration, topMargin, screen)
+    return showInternal(message, duration, topMargin, screen, tostring(key or "default"))
 end
 
 function M.closeAll()
