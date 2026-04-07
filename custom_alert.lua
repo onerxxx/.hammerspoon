@@ -45,8 +45,11 @@ local function resolveFont()
     end
 
     local preferredFonts = {
-
-        "HarmonyOS Medium",
+        ".SFNS-Medium",
+        ".AppleSystemUIFontSemibold",
+        "PingFangSC-Semibold",
+        ".AppleSystemUIFont",
+        "PingFangSC-Medium",
         "SF Pro Text Semibold",
         "SF Pro Text",
     }
