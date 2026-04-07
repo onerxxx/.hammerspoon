@@ -12,8 +12,8 @@ local lastBrightnessAdjustTime = nil
 local ILLUMINATION_SENSOR_ID = "sensor.xiaomi_pir1_45bb_illumination"
 local BETTER_DISPLAY_PATH = "/Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay"
 local ILLUMINATION_CHANGE_THRESHOLD = 4
-local BRIGHTNESS_ADJUST_INTERVAL = 300
-local MONITOR_INTERVAL = 300
+local BRIGHTNESS_ADJUST_INTERVAL = 600
+local MONITOR_INTERVAL = 600
 local BRIGHTNESS_ICON = "􀻟"
 
 local DISPLAY_CONFIGS = {
@@ -100,8 +100,16 @@ local function getDisplayBrightness(displayConfig, illumination)
     return displayConfig.high
 end
 
-local function getBrightnessPercent(brightness)
-    return math.floor(tonumber(brightness) * 100)
+local function getBrightnessLevel(displayConfig, brightness)
+    if brightness == displayConfig.low then
+        return "低"
+    end
+
+    if brightness == displayConfig.medium then
+        return "中"
+    end
+
+    return "高"
 end
 
 local function showBrightnessAlert(lgBrightness, aocBrightness)
@@ -110,11 +118,18 @@ local function showBrightnessAlert(lgBrightness, aocBrightness)
     end
 
     if M.showCustomAlert then
+        local lgLevel = getBrightnessLevel(DISPLAY_CONFIGS[1], lgBrightness)
+        local aocLevel = getBrightnessLevel(DISPLAY_CONFIGS[2], aocBrightness)
+        local brightnessSummary = lgLevel
+
+        if lgLevel ~= aocLevel then
+            brightnessSummary = string.format("LG %s / AOC %s", lgLevel, aocLevel)
+        end
+
         M.showCustomAlert(string.format(
-            "%s LG:%s%% AOC:%s%%",
+            "%s显示器亮度: %s",
             BRIGHTNESS_ICON,
-            getBrightnessPercent(lgBrightness),
-            getBrightnessPercent(aocBrightness)
+            brightnessSummary
         ))
     end
 end
@@ -200,7 +215,7 @@ local function monitorIlluminationSensor()
         end
 
         -- 光照变化达到阈值且冷却时间已过，执行显示器亮度调整
-        log("光照度变化超过4 lux，且距上次调整已超过5分钟，触发亮度调节")
+        log("光照度变化超过4 lux，且距上次调整已超过10分钟，触发亮度调节")
         setBrightnessWithCLI(illumination)
 
         -- 更新最近一次用于判断的光照值和亮度调整时间
@@ -217,7 +232,7 @@ function M.startIlluminationMonitoring()
 
     monitorIlluminationSensor()
     illuminationTimer = hs.timer.doEvery(MONITOR_INTERVAL, monitorIlluminationSensor)
-    log("光照传感器监控已启动（每5分钟检查一次）")
+    log("光照传感器监控已启动（每10分钟检查一次）")
 end
 
 -- 停止光照传感器监控
