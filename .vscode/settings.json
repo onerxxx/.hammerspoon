@@ -4,5 +4,7 @@
         "output",
         "f10Timer",
         "f10BrightnessTimer"
-    ]
+    ],
+    "chatgpt.openOnStartup": false,
+    "chatgpt.commentCodeLensEnabled": false
 }
