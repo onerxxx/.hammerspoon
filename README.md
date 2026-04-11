@@ -132,30 +132,11 @@ Microsoft Edge 浏览器窗口管理：
 - 自动转换路径并使用系统默认播放器打开
 - 支持本地 /Volumes 路径的视频文件
 
-### folderSync.lua
-文件夹自动同步工具：
-- 定期同步指定的源文件夹到目标文件夹（每2小时）
-- 使用 rsync 确保文件完整性
-- 支持手动触发同步
-
 ### appgrid.lua
 AppGrid 应用启动器触发模块：
 - 鼠标移动到屏幕右下角时自动触发 AppGrid
 - 支持调试模式查看触发区域
 - 提供手动触发热键
-
-### shutdown_manager.lua
-退出清理回调注册模块：
-- 统一管理各模块的 `hs.shutdownCallback`
-- 避免模块之间互相覆盖清理回调
-- 降低 `eventtap`、`timer`、`watcher` 因生命周期问题失效的风险
-
-### virtual_keys.lua
-Moonlight 虚拟按键映射模块：
-- 在 Moonlight 应用中将 Cmd 键映射为 Ctrl 键
-- 支持完整的 Cmd+组合键映射
-- 提供多个快捷键用于调试和管理
-
 
 ## 快捷键总览
 
